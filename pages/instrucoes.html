@@ -1,0 +1,89 @@
+<div class="card animate__animated animate__fadeIn mt-3">
+    <div class="card-header">
+        <h3 class="mb-0"><i class="bi bi-info-circle me-2"></i>Instruções</h3>
+    </div>
+    <div class="card-body">
+        <div class="instrucoes-texto">
+            <h4>Bem-vinda ao Vivalld, <span id="nomeUsuario">{{nome_usuario}}</span>!</h4>
+            <p>Este aplicativo foi desenvolvido para ajudar no planejamento musical do seu casamento de forma simples e elegante.</p>
+            
+            <div class="alert alert-custom mt-3">
+                <i class="bi bi-heart-fill"></i>
+                <strong>Importante:</strong> Suas escolhas serão salvas automaticamente e poderão ser acessadas a qualquer momento.
+            </div>
+            
+            <h5 class="mt-4">🎵 Como funciona:</h5>
+            <ol class="list-group list-group-numbered mb-3">
+                <li class="list-group-item bg-transparent border-0">Leia atentamente todas as instruções</li>
+                <li class="list-group-item bg-transparent border-0">Marque a opção "Li e concordo com as instruções" ao final</li>
+                <li class="list-group-item bg-transparent border-0">Clique em Próximo para continuar</li>
+                <li class="list-group-item bg-transparent border-0">Na próxima tela, leia as orientações específicas</li>
+                <li class="list-group-item bg-transparent border-0">Após ler, marque a opção e clique em Próximo</li>
+                <li class="list-group-item bg-transparent border-0">Escolha até 2 músicas para cada momento da cerimônia</li>
+                <li class="list-group-item bg-transparent border-0">Você pode ouvir um trecho de cada música antes de escolher</li>
+                <li class="list-group-item bg-transparent border-0">Ao final, confira seu repertório completo</li>
+            </ol>
+            
+            <h5 class="mt-4">💡 Dicas importantes:</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-clock text-primary-custom"></i> <strong>Timing:</strong> Cada música tem em média 3-4 minutos</li>
+                        <li><i class="bi bi-music-note text-primary-custom"></i> <strong>Estilo:</strong> Escolha músicas que combinem com o estilo da cerimônia</li>
+                        <li><i class="bi bi-chat-text text-primary-custom"></i> <strong>Letra:</strong> Preste atenção na letra das músicas escolhidas</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-arrow-left-right text-primary-custom"></i> <strong>Transições:</strong> Pense na fluidez entre as músicas</li>
+                        <li><i class="bi bi-people text-primary-custom"></i> <strong>Participação:</strong> Considere a participação da assembleia</li>
+                        <li><i class="bi bi-calendar-check text-primary-custom"></i> <strong>Ensaios:</strong> Agende com antecedência</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h5 class="mt-4">📅 Prazos importantes:</h5>
+            <table class="table table-borderless">
+                <tr>
+                    <td><i class="bi bi-calendar3"></i> Seleção do repertório</td>
+                    <td><strong>30 dias antes</strong></td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-pencil"></i> Alterações</td>
+                    <td><strong>15 dias antes</strong> (sujeito a disponibilidade)</td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-mic"></i> Ensaios</td>
+                    <td><strong>7 dias antes</strong> da cerimônia</td>
+                </tr>
+            </table>
+            
+            <h5 class="mt-4">📞 Contato:</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <p><i class="bi bi-whatsapp text-success"></i> (11) 99999-9999</p>
+                </div>
+                <div class="col-md-4">
+                    <p><i class="bi bi-envelope text-primary"></i> suporte@vivalld.com</p>
+                </div>
+                <div class="col-md-4">
+                    <p><i class="bi bi-clock"></i> Seg-Sex, 9h-18h</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" id="concordoInstrucoes" {{instrucoes_lidas}}>
+            <label class="form-check-label" for="concordoInstrucoes">
+                <i class="bi bi-check-circle"></i> Li e concordo com todas as instruções
+            </label>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div></div>
+            <button class="btn btn-primary" id="btnProximoInstrucoes" {{#if instrucoes_lidas}}disabled{{/if}}>
+                Continuar <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </div>
+    </div>
+</div>

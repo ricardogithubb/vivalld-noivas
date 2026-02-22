@@ -1,0 +1,77 @@
+<div class="card animate__animated animate__fadeIn mt-3">
+    <div class="card-header">
+        <h3 class="mb-0"><i class="bi bi-receipt me-2"></i>Boletos e Pagamentos</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i>
+            <strong>Resumo financeiro:</strong> 
+            <span class="ms-2">Valor total: R$ 3.500,00</span>
+            <span class="ms-3">Pago: R$ 1.050,00</span>
+            <span class="ms-3">Pendente: R$ 2.450,00</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Vencimento</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Data Pagamento</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="boletosTable">
+                    <!-- Conteúdo será carregado via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card bg-transparent border-primary-custom">
+                    <div class="card-body">
+                        <h5><i class="bi bi-credit-card"></i> Formas de Pagamento</h5>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> Boleto bancário</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Transferência bancária</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Pix (chave: pagamentos@vivalld.com)</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Cartão de crédito (até 3x sem juros)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card bg-transparent border-primary-custom">
+                    <div class="card-body">
+                        <h5><i class="bi bi-bank"></i> Dados Bancários</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Banco:</strong> 000 - Banco do Brasil</li>
+                            <li><strong>Agência:</strong> 0000-0</li>
+                            <li><strong>Conta:</strong> 00000-0</li>
+                            <li><strong>CNPJ:</strong> 00.000.000/0001-00</li>
+                            <li><strong>Favorecido:</strong> Vivalld Serviços Musicais</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning mt-4">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Atenção:</strong> O não pagamento de qualquer parcela poderá acarretar na suspensão dos serviços e aplicação de multas conforme contrato. Em caso de dúvidas, entre em contato.
+        </div>
+        
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-primary" onclick="showSection('contrato')">
+                <i class="bi bi-file-text me-2"></i>Ver Contrato
+            </button>
+            <button class="btn btn-outline-success ms-2" onclick="showSection('repertorioFinal')">
+                <i class="bi bi-journal-bookmark-fill me-2"></i>Meu Repertório
+            </button>
+        </div>
+    </div>
+</div>
