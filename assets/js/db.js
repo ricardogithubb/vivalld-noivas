@@ -1,6 +1,6 @@
 const DB = {
-    DB_NAME: 'VivalldDB',
-    DB_VERSION: 3, // Incrementado para forçar upgrade
+    DB_NAME: 'VivalldDB2',
+    DB_VERSION: 1, // Incrementado para forçar upgrade
     db: null,
     isInitialized: false,
 
