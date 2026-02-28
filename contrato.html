@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivalld - Contrato</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header fixed-top">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-2">
+                    <button id="backButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="col-8 text-center d-flex justify-content-center align-items-center">
+                    <i class="bi bi-music-note-beamed me-2"
+                    style="font-size: 1.5rem; color: var(--primary-color);"></i>
+                    <h2 class="m-0">Vivalld</h2>
+                </div>
+                <div class="col-2 text-end">
+                    <button id="menuButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-card fade-in">
+            <div class="text-center mb-4">
+                <i class="bi bi-file-pdf-fill" style="font-size: 4rem; color: #dc3545;"></i>
+                <h2 class="section-title mt-3">Contrato de Prestação de Serviços</h2>
+                <p class="text-muted">Clique no botão abaixo para visualizar e assinar o contrato</p>
+            </div>
+
+            <!-- Card do Contrato -->
+            <div class="contract-preview-card">
+                <div class="contract-preview-header">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Contrato Vivalld - Serviços Musicais</span>
+                </div>
+                <div class="contract-preview-body">
+                    <div class="contract-info">
+                        <div class="contract-info-item">
+                            <i class="bi bi-person-circle"></i>
+                            <span><strong>Contratante:</strong> <span id="contractantName">Carregando...</span></span>
+                        </div>
+                        <div class="contract-info-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <span><strong>Data do Evento:</strong> <span id="eventDate">A definir</span></span>
+                        </div>
+                        <div class="contract-info-item">
+                            <i class="bi bi-cash-stack"></i>
+                            <span><strong>Valor Total:</strong> R$ 5.000,00</span>
+                        </div>
+                        <div class="contract-info-item">
+                            <i class="bi bi-file-check"></i>
+                            <span><strong>Status:</strong> <span class="badge bg-warning text-dark">Aguardando assinatura</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="contract-actions">
+                <button class="btn btn-outline-primary" id="viewContractBtn">
+                    <i class="bi bi-file-pdf-fill me-2"></i>
+                    Visualizar Contrato (PDF)
+                </button>
+                <button class="btn btn-primary" id="downloadContractBtn">
+                    <i class="bi bi-download me-2"></i>
+                    Baixar Contrato
+                </button>
+                <button class="btn btn-success" id="signContractBtn">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Assinar Contrato
+                </button>
+            </div>
+
+            <!-- Informações Adicionais -->
+            <div class="contract-info-box mt-4">
+                <h5><i class="bi bi-info-circle-fill me-2" style="color: var(--primary-color);"></i>Informações Importantes</h5>
+                <ul class="mb-0">
+                    <li>O contrato deve ser assinado digitalmente até 7 dias antes do evento</li>
+                    <li>Após a assinatura, uma cópia será enviada para seu e-mail</li>
+                    <li>Em caso de dúvidas, entre em contato com nossa equipe</li>
+                    <li>O PDF do contrato contém todas as cláusulas e condições do serviço</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Menu Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="menuOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="list-group">
+                <button class="list-group-item list-group-item-action menu-item" data-action="repertorio">
+                    <i class="bi bi-music-note-beamed me-3"></i> Repertório
+                </button>
+                <button class="list-group-item list-group-item-action menu-item active" data-action="contrato">
+                    <i class="bi bi-file-text me-3"></i> Contrato
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
+                    <i class="bi bi-receipt me-3"></i> Boletos
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="resumo">
+                    <i class="bi bi-check2-circle me-3"></i> Repertório Escolhido
+                </button>
+                <hr>
+                <button class="list-group-item list-group-item-action menu-item text-danger" data-action="logout">
+                    <i class="bi bi-box-arrow-right me-3"></i> Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Assinatura -->
+    <div class="modal fade" id="signModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assinar Contrato</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-pencil-square" style="font-size: 3rem; color: var(--primary-color);"></i>
+                        <h6 class="mt-3">Confirme sua assinatura digital</h6>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nome completo</label>
+                        <input type="text" class="form-control" id="signName" 
+                               placeholder="Digite seu nome completo" value="">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">CPF</label>
+                        <input type="text" class="form-control" id="signCPF" 
+                               placeholder="000.000.000-00">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Senha de assinatura</label>
+                        <input type="password" class="form-control" id="signPassword" 
+                               placeholder="********">
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="acceptTerms">
+                        <label class="form-check-label" for="acceptTerms">
+                            Confirmo que li e concordo com todos os termos do contrato
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmSignBtn" disabled>
+                        <i class="bi bi-check-lg me-2"></i>Confirmar Assinatura
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sucesso -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">Contrato Assinado!</h4>
+                    <p class="text-muted">Uma cópia foi enviada para seu e-mail</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/db.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/utils.js"></script>
+    <script>
+        let menuOffcanvas;
+        let signModal;
+        let successModal;
+
+        // URL do PDF do contrato (pode ser um arquivo local ou URL externa)
+        const CONTRACT_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'; // PDF de exemplo
+        // Para usar um PDF local, coloque o arquivo na pasta /assets/pdfs/ e use:
+        // const CONTRACT_PDF_URL = '/assets/pdfs/contrato-vivalld.pdf';
+
+        $(document).ready(async () => {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+                
+                await DB.init();
+                await Auth.init();
+                
+                // Verificar autenticação
+                if (!Auth.currentUser) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Verificar termos
+                const terms = await Auth.checkFirstTimeUser();
+                if (!terms.termo1Aceito || !terms.termo2Aceito) {
+                    window.location.href = 'termo1.html';
+                    return;
+                }
+
+                // Inicializar componentes
+                menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
+                signModal = new bootstrap.Modal(document.getElementById('signModal'));
+                successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+                // Carregar dados do usuário
+                loadUserData();
+
+                // Setup event listeners
+                setupEventListeners();
+
+            } catch (error) {
+                console.error('Error initializing page:', error);
+                Utils.showToast('Erro ao carregar página', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
+        });
+
+        function setupEventListeners() {
+            // Menu button
+            $('#menuButton').on('click', () => menuOffcanvas.show());
+
+            // Menu items
+            $('.menu-item').on('click', async (e) => {
+                const action = $(e.currentTarget).data('action');
+                menuOffcanvas.hide();
+                
+                if (action === 'logout') {
+                    await handleLogout();
+                } else {
+                    window.location.href = `${action}.html`;
+                }
+            });
+
+            // Back button
+            $('#backButton').on('click', () => {
+                window.history.back();
+            });
+
+            // View contract button - ABRE O PDF EM NOVA ABA
+            $('#viewContractBtn').on('click', () => {
+                window.open(CONTRACT_PDF_URL, '_blank');
+            });
+
+            // Download contract button
+            $('#downloadContractBtn').on('click', () => {
+                downloadContract();
+            });
+
+            // Sign contract button
+            $('#signContractBtn').on('click', () => {
+                // Preencher dados do usuário no modal
+                if (Auth.currentUser) {
+                    $('#signName').val(Auth.currentUser.email.split('@')[0] || '');
+                }
+                signModal.show();
+            });
+
+            // Sign form validation
+            $('#signName, #signCPF, #signPassword, #acceptTerms').on('input change', () => {
+                validateSignForm();
+            });
+
+            // Confirm sign button
+            $('#confirmSignBtn').on('click', async () => {
+                await signContract();
+            });
+
+            // CPF mask
+            $('#signCPF').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length > 11) value = value.slice(0, 11);
+                
+                if (value.length > 9) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                } else if (value.length > 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+                } else if (value.length > 3) {
+                    value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+                }
+                
+                $(this).val(value);
+            });
+        }
+
+        function loadUserData() {
+            if (Auth.currentUser) {
+                // Extrair nome do email (parte antes do @)
+                const emailName = Auth.currentUser.email.split('@')[0];
+                $('#contractantName').text(emailName || 'Não informado');
+            }
+        }
+
+        function validateSignForm() {
+            const name = $('#signName').val().trim();
+            const cpf = $('#signCPF').val().replace(/\D/g, '');
+            const password = $('#signPassword').val();
+            const accepted = $('#acceptTerms').is(':checked');
+            
+            const isValid = name.length > 0 && cpf.length === 11 && password.length > 0 && accepted;
+            $('#confirmSignBtn').prop('disabled', !isValid);
+        }
+
+        async function signContract() {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+                signModal.hide();
+
+                // Simular processo de assinatura
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Salvar assinatura no banco (opcional)
+                await DB.set('contract', 'signed', {
+                    signedAt: new Date().toISOString(),
+                    userName: $('#signName').val(),
+                    userEmail: Auth.currentUser.email
+                });
+
+                // Mostrar modal de sucesso
+                successModal.show();
+
+                // Atualizar status na interface
+                $('.badge').removeClass('bg-warning text-dark').addClass('bg-success').text('Assinado');
+
+                Utils.showToast('Contrato assinado com sucesso!');
+
+            } catch (error) {
+                console.error('Error signing contract:', error);
+                Utils.showToast('Erro ao assinar contrato', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
+        }
+
+        function downloadContract() {
+            // Criar link de download
+            const link = document.createElement('a');
+            link.href = CONTRACT_PDF_URL;
+            link.download = 'contrato-vivalld.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            Utils.showToast('Download do contrato iniciado');
+        }
+
+        async function handleLogout() {
+            await Auth.logout();
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <style>
+        .contract-preview-card {
+            background: linear-gradient(135deg, #ffffff, #f8f0e6);
+            border: 2px dashed var(--primary-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .contract-preview-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        .contract-preview-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .contract-preview-header i {
+            font-size: 2rem;
+            color: #dc3545;
+            margin-right: 0.5rem;
+        }
+
+        .contract-info {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .contract-info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .contract-info-item i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            width: 24px;
+            text-align: center;
+        }
+
+        .contract-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .contract-actions .btn {
+            min-width: 200px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .contract-actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .contract-info-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .contract-info-box h5 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .contract-info-box ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .contract-info-box li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .contract-info-box li:before {
+            content: "•";
+            color: var(--primary-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .contract-actions {
+                flex-direction: column;
+            }
+            
+            .contract-actions .btn {
+                width: 100%;
+            }
+            
+            .contract-preview-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Animação para o ícone do PDF */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .bi-file-pdf-fill {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</body>
+</html>

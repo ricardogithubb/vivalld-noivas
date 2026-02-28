@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivalld - Meu Repertório</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header fixed-top">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-2">
+                    <button id="backButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="col-8 text-center d-flex justify-content-center align-items-center">
+                    <i class="bi bi-music-note-beamed me-2"
+                    style="font-size: 1.5rem; color: var(--primary-color);"></i>
+                    <h2 class="m-0">Vivalld</h2>
+                </div>
+                <div class="col-2 text-end">
+                    <button id="menuButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="main-content">
+        <!-- Conteúdo será carregado dinamicamente -->
+    </main>
+
+    <!-- Menu Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="menuOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="list-group">
+                <button class="list-group-item list-group-item-action menu-item" data-action="repertorio">
+                    <i class="bi bi-music-note-beamed me-3"></i> Repertório
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
+                    <i class="bi bi-file-text me-3"></i> Contrato
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
+                    <i class="bi bi-receipt me-3"></i> Boletos
+                </button>
+                <button class="list-group-item list-group-item-action menu-item active" data-action="resumo">
+                    <i class="bi bi-check2-circle me-3"></i> Repertório Escolhido
+                </button>
+                <hr>
+                <button class="list-group-item list-group-item-action menu-item text-danger" data-action="logout">
+                    <i class="bi bi-box-arrow-right me-3"></i> Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">Tem certeza que deseja realizar esta ação?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmAction">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/db.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/repertorio.js"></script>
+    <script src="/assets/js/utils.js"></script>
+    <script>
+        let menuOffcanvas;
+        let confirmModal;
+        let currentAction = null;
+
+        const sections = [
+            'Entrada do Noivo',
+            'Entrada das Damas',
+            'Entrada da Noiva',
+            'Salmo',
+            'Aclamação',
+            'Comunhão',
+            'Assinatura',
+            'Fotos',
+            'Saída do Casal'
+        ];
+
+        $(document).ready(async () => {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+                
+                await DB.init();
+                await Auth.init();
+                await Repertorio.init();
+                
+                // Verificar autenticação
+                if (!Auth.currentUser) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Verificar termos
+                const terms = await Auth.checkFirstTimeUser();
+                if (!terms.termo1Aceito || !terms.termo2Aceito) {
+                    window.location.href = 'termo1.html';
+                    return;
+                }
+
+                // Inicializar componentes
+                menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
+                confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+
+                // Carregar resumo
+                await loadResumo();
+
+                // Setup event listeners
+                setupEventListeners();
+
+            } catch (error) {
+                console.error('Error initializing page:', error);
+                Utils.showToast('Erro ao carregar página', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
+        });
+
+        function setupEventListeners() {
+            // Menu button
+            $('#menuButton').on('click', () => menuOffcanvas.show());
+
+            // Menu items
+            $('.menu-item').on('click', async (e) => {
+                const action = $(e.currentTarget).data('action');
+                menuOffcanvas.hide();
+                
+                if (action === 'logout') {
+                    await handleLogout();
+                } else {
+                    window.location.href = `${action}.html`;
+                }
+            });
+
+            // Back button
+            $('#backButton').on('click', () => {
+                window.history.back();
+            });
+
+            // Confirm action
+            $('#confirmAction').on('click', async () => {
+                if (currentAction === 'clear') {
+                    await clearRepertory();
+                } else if (currentAction === 'edit') {
+                    window.location.href = 'repertorio.html';
+                }
+                confirmModal.hide();
+            });
+        }
+
+        async function loadResumo() {
+            const selections = Repertorio.selections;
+            let hasSelections = false;
+            
+            let html = `
+                <div class="section-card fade-in">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="section-title mb-0">Meu Repertório</h2>
+                        <span class="badge bg-primary" style="background: linear-gradient(135deg, var(--primary-color), #e8c98b);">
+                            ${getTotalSelectedSongs()} músicas
+                        </span>
+                    </div>
+            `;
+
+            // Verificar se há seleções
+            for (const section of sections) {
+                if (selections[section] && selections[section].length > 0) {
+                    hasSelections = true;
+                    break;
+                }
+            }
+
+            if (!hasSelections) {
+                html += `
+                    <div class="text-center py-5">
+                        <i class="bi bi-music-note-beamed" style="font-size: 4rem; color: var(--border-color);"></i>
+                        <h3 class="h5 mt-3" style="color: var(--text-light);">Nenhuma música selecionada</h3>
+                        <p class="text-muted small">Você ainda não escolheu suas músicas</p>
+                        <button class="btn btn-primary next-btn mt-3" onclick="window.location.href='repertorio.html'">
+                            <i class="bi bi-plus-circle me-2"></i>Começar a Selecionar
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Mostrar seções com músicas selecionadas
+                for (const section of sections) {
+                    const sectionSelections = selections[section] || [];
+                    
+                    if (sectionSelections.length > 0) {
+                        html += `
+                            <div class="resumo-section mb-4">
+                                <h3 class="resumo-section-title">
+                                    ${section}
+                                    <span class="resumo-section-count">${sectionSelections.length}/2</span>
+                                </h3>
+                                <div class="resumo-songs">
+                        `;
+                        
+                        for (const songId of sectionSelections) {
+                            const song = await DB.get('songs', songId);
+                            if (song) {
+                                html += `
+                                    <div class="resumo-song-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h4 class="resumo-song-title">${song.title}</h4>
+                                                <p class="resumo-song-artist">${song.artist}</p>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger remove-song" 
+                                                    data-song-id="${song.id}" 
+                                                    data-section="${section}"
+                                                    title="Remover música">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        html += '</div></div>';
+                    }
+                }
+
+                // Botões de ação
+                html += `
+                    <div class="resumo-actions mt-4">
+                        <button class="btn btn-outline-primary" id="editRepertoryBtn">
+                            <i class="bi bi-pencil me-2"></i>Editar Repertório
+                        </button>
+                        <button class="btn btn-outline-danger" id="clearRepertoryBtn">
+                            <i class="bi bi-trash me-2"></i>Limpar Tudo
+                        </button>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            
+            $('#mainContent').html(html);
+
+            // Adicionar event listeners para botões de remover
+            $('.remove-song').on('click', async (e) => {
+                e.stopPropagation();
+                const songId = $(e.currentTarget).data('song-id');
+                const section = $(e.currentTarget).data('section');
+                await removeSong(songId, section);
+            });
+
+            $('#editRepertoryBtn').on('click', () => {
+                currentAction = 'edit';
+                $('#confirmMessage').text('Deseja editar seu repertório? Você voltará para o wizard de seleção.');
+                confirmModal.show();
+            });
+
+            $('#clearRepertoryBtn').on('click', () => {
+                currentAction = 'clear';
+                $('#confirmMessage').text('Tem certeza que deseja limpar todo o repertório? Esta ação não pode ser desfeita.');
+                confirmModal.show();
+            });
+        }
+
+        async function removeSong(songId, section) {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+                
+                // Remover do objeto selections
+                const index = Repertorio.selections[section].indexOf(songId);
+                if (index > -1) {
+                    Repertorio.selections[section].splice(index, 1);
+                }
+                
+                // Se a seção ficou vazia, remover a propriedade
+                if (Repertorio.selections[section].length === 0) {
+                    delete Repertorio.selections[section];
+                }
+                
+                // Salvar no banco
+                await DB.set('selections', 'userSelections', Repertorio.selections);
+                
+                // Recarregar resumo
+                await loadResumo();
+                
+                Utils.showToast('Música removida com sucesso');
+                
+            } catch (error) {
+                console.error('Error removing song:', error);
+                Utils.showToast('Erro ao remover música', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
+        }
+
+        async function clearRepertory() {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+                
+                Repertorio.selections = {};
+                await DB.set('selections', 'userSelections', {});
+                await loadResumo();
+                
+                Utils.showToast('Repertório limpo com sucesso');
+                
+            } catch (error) {
+                console.error('Error clearing repertory:', error);
+                Utils.showToast('Erro ao limpar repertório', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
+        }
+
+        async function handleLogout() {
+            await Auth.logout();
+            window.location.href = 'login.html';
+        }
+
+        function getTotalSelectedSongs() {
+            let total = 0;
+            for (const section of sections) {
+                if (Repertorio.selections[section]) {
+                    total += Repertorio.selections[section].length;
+                }
+            }
+            return total;
+        }
+    </script>
+
+    <style>
+        .resumo-section {
+            background: linear-gradient(135deg, #ffffff, #fef9f4);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .resumo-section:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+        }
+
+        .resumo-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resumo-section-count {
+            font-size: 0.9rem;
+            background: var(--accent-color);
+            color: var(--secondary-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .resumo-song-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .resumo-song-card:hover {
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .resumo-song-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .resumo-song-artist {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+
+        .resumo-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .resumo-actions .btn {
+            flex: 1;
+            max-width: 200px;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .resumo-actions .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .resumo-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .resumo-actions .btn {
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+    </style>
+</body>
+</html>

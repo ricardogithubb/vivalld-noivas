@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivalld - Instruções</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header fixed-top">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-2">
+                    <button id="backButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="col-8 text-center d-flex justify-content-center align-items-center">
+                    <i class="bi bi-music-note-beamed me-2"
+                    style="font-size: 1.5rem; color: var(--primary-color);"></i>
+                    <h2 class="m-0">Vivalld</h2>
+                </div>
+                <div class="col-2 text-end">
+                    <button id="menuButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-card fade-in">
+            <h2 class="section-title">Instruções</h2>
+            <div class="contract-content mb-4">
+                <h4>Instruções para Escolha do Repertório</h4>
+                <p>1. Você pode selecionar até 2 músicas por seção.</p>
+                <p>2. Ouça as prévias antes de fazer sua escolha.</p>
+                <p>3. As músicas selecionadas serão usadas na cerimônia.</p>
+                <p>4. Após a confirmação, não será possível alterar as escolhas sem contatar a produção.</p>
+                <p>5. Certifique-se de que as letras estão de acordo com a liturgia.</p>
+                <p>6. Em caso de dúvidas, consulte o celebrante.</p>
+                <p>7. O prazo para escolha do repertório é de 30 dias antes da cerimônia.</p>
+                <p>8. Músicas não selecionadas até o prazo serão escolhidas pela produção.</p>
+                <p>9. É possível ouvir a prévia completa de cada música.</p>
+                <p>10. Ao navegar entre as seções, a música em reprodução será pausada.</p>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="acceptTerm">
+                <label class="form-check-label" for="acceptTerm">
+                    Li e concordo com as instruções
+                </label>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer fixed-bottom">
+        <div class="container-fluid">
+            <button id="nextButton" class="btn btn-primary next-btn w-100" disabled>
+                Próximo
+            </button>
+        </div>
+    </footer>
+
+    <!-- Menu Offcanvas (mesmo código) -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="menuOffcanvas">
+        <!-- mesmo conteúdo do menu -->
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/db.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/utils.js"></script>
+    <script>
+        $(document).ready(async () => {
+            await DB.init();
+            await Auth.init();
+            
+            if (!Auth.currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Verificar se já aceitou o termo1
+            const terms = await Auth.checkFirstTimeUser();
+            if (terms.termo1Aceito) {
+                window.location.href = 'termo2.html';
+                return;
+            }
+
+            const menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
+            
+            $('#menuButton').on('click', () => menuOffcanvas.show());
+
+            $('.menu-item').on('click', async (e) => {
+                const action = $(e.currentTarget).data('action');
+                menuOffcanvas.hide();
+                
+                if (action === 'logout') {
+                    await Auth.logout();
+                    window.location.href = 'login.html';
+                } else {
+                    window.location.href = `${action}.html`;
+                }
+            });
+
+            $('#backButton').on('click', () => {
+                window.location.href = 'login.html';
+            });
+
+            $('#acceptTerm').on('change', function() {
+                $('#nextButton').prop('disabled', !$(this).is(':checked'));
+            });
+
+            $('#nextButton').on('click', async () => {
+                if ($('#acceptTerm').is(':checked')) {
+                    $('#loadingOverlay').removeClass('d-none');
+                    await Auth.acceptTerm(1);
+                    window.location.href = 'termo2.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

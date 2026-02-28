@@ -1,5 +1,3 @@
-// musicas.js - Catálogo de músicas
-
 // Catálogo completo de músicas
 const musicasDB = {
   "entradaNoivo": [
@@ -189,62 +187,4 @@ const musicasDB = {
   ]
 };
 
-// Obter músicas por categoria
-function getMusicasByCategoria(categoria) {
-    return musicasDB[categoria] || [];
-}
-
-// Obter todas as categorias
-function getAllCategorias() {
-    return Object.keys(musicasDB);
-}
-
-// Buscar música por ID
-function getMusicaById(id) {
-    for (const categoria in musicasDB) {
-        const musica = musicasDB[categoria].find(m => m.id === id);
-        if (musica) {
-            return { ...musica, categoria };
-        }
-    }
-    return null;
-}
-
-// Buscar músicas por termo
-function searchMusicas(termo) {
-    const resultados = [];
-    const termoLower = termo.toLowerCase();
-    
-    for (const categoria in musicasDB) {
-        const encontradas = musicasDB[categoria].filter(m => 
-            m.nome.toLowerCase().includes(termoLower) || 
-            m.artista.toLowerCase().includes(termoLower)
-        );
-        resultados.push(...encontradas);
-    }
-    
-    return resultados;
-}
-
-// Obter músicas selecionadas pelo usuário
-function getMusicasSelecionadas(selecoes) {
-    const resultado = {};
-    
-    for (const categoria in selecoes) {
-        resultado[categoria] = musicasDB[categoria]?.filter(m => 
-            selecoes[categoria].includes(m.id)
-        ) || [];
-    }
-    
-    return resultado;
-}
-
-// Exportar funções
-window.Musicas = {
-    getAll: musicasDB,
-    getByCategoria: getMusicasByCategoria,
-    getAllCategorias,
-    getById: getMusicaById,
-    search: searchMusicas,
-    getSelecionadas: getMusicasSelecionadas
-};
+window.musicasDB = musicasDB;

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivalld - Repertório</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header fixed-top">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-2">
+                    <button id="backButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="col-8 text-center d-flex justify-content-center align-items-center">
+                    <i class="bi bi-music-note-beamed me-2"
+                    style="font-size: 1.5rem; color: var(--primary-color);"></i>
+                    <h2 class="m-0">Vivalld</h2>
+                </div>
+                <div class="col-2 text-end">
+                    <button id="menuButton" class="btn btn-link nav-btn">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Progress Bar -->
+        <div id="progressContainer" class="progress-container">
+            <div class="progress">
+                <div id="wizardProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <span id="progressText" class="progress-text">0/9</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="main-content">
+        <!-- Content will be loaded dynamically -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer fixed-bottom">
+        <div class="container-fluid">
+            <button id="nextButton" class="btn btn-primary next-btn w-100" disabled>
+                Próximo
+            </button>
+        </div>
+    </footer>
+
+    <!-- Menu Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="menuOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="list-group">
+                <button class="list-group-item list-group-item-action menu-item" data-action="repertorio">
+                    <i class="bi bi-music-note-beamed me-3"></i> Repertório
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
+                    <i class="bi bi-file-text me-3"></i> Contrato
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
+                    <i class="bi bi-receipt me-3"></i> Boletos
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="resumo">
+                    <i class="bi bi-check2-circle me-3"></i> Repertório Escolhido
+                </button>
+                <hr>
+                <button class="list-group-item list-group-item-action menu-item text-danger" data-action="logout">
+                    <i class="bi bi-box-arrow-right me-3"></i> Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/musicas.js"></script>
+    <script src="/assets/js/db.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/repertorio.js"></script>
+    <script src="/assets/js/utils.js"></script>
+    <script>
+        let menuOffcanvas;
+        let currentSectionIndex = 0;
+        const sections = [
+            'Entrada do Noivo',
+            'Entrada das Damas',
+            'Entrada da Noiva',
+            'Salmo',
+            'Aclamação',
+            'Comunhão',
+            'Assinatura',
+            'Fotos',
+            'Saída do Casal'
+        ];
+
+
+        $(document).ready(async () => {
+            await DB.init();
+            await Auth.init();
+            await Repertorio.init();
+            
+            // Verificar autenticação
+            if (!Auth.currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Verificar termos
+            const terms = await Auth.checkFirstTimeUser();
+            if (!terms.termo1Aceito || !terms.termo2Aceito) {
+                window.location.href = 'termo1.html';
+                return;
+            }
+
+            // Setup menu
+            menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
+            
+            // Carregar seção atual
+            currentSectionIndex = Repertorio.currentSectionIndex;
+            await loadCurrentSection();
+
+            // Event Listeners
+            $('#menuButton').on('click', () => menuOffcanvas.show());
+            
+            $('#backButton').on('click', async () => {
+                if (currentSectionIndex > 0) {
+                    currentSectionIndex--;
+                    Repertorio.currentSectionIndex = currentSectionIndex;
+                    await DB.set('wizardProgress', 'currentSection', currentSectionIndex);
+                    await loadCurrentSection();
+                } else {
+                    window.location.href = 'termo2.html';
+                }
+            });
+
+            $('#nextButton').on('click', async () => {
+                if (currentSectionIndex < sections.length - 1) {
+                    currentSectionIndex++;
+                    Repertorio.currentSectionIndex = currentSectionIndex;
+                    await DB.set('wizardProgress', 'currentSection', currentSectionIndex);
+                    await loadCurrentSection();
+                } else {
+                    window.location.href = 'resumo.html';
+                }
+            });
+
+            // Menu items
+            $('.menu-item').on('click', async (e) => {
+                const action = $(e.currentTarget).data('action');
+                menuOffcanvas.hide();
+                
+                if (action === 'logout') {
+                    await Auth.logout();
+                    window.location.href = 'login.html';
+                } else {
+                    window.location.href = `${action}.html`;
+                }
+            });
+        });
+
+        async function loadCurrentSection() {
+            $('#loadingOverlay').removeClass('d-none');
+            
+            const sectionName = sections[currentSectionIndex];
+            const html = await Repertorio.renderSection(sectionName);
+            $('#mainContent').html(html);
+            
+            updateProgress();
+            Repertorio.updateNextButton();
+            
+            $('#loadingOverlay').addClass('d-none');
+        }
+
+        function updateProgress() {
+            const progress = ((currentSectionIndex + 1) / sections.length) * 100;
+            $('#wizardProgress').css('width', `${progress}%`);
+            $('#progressText').text(`${currentSectionIndex + 1}/${sections.length}`);
+        }
+    </script>
+</body>
+</html>
