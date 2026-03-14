@@ -62,12 +62,12 @@
                 <button class="list-group-item list-group-item-action menu-item" data-action="repertorio">
                     <i class="bi bi-music-note-beamed me-3"></i> Repertório
                 </button>
-                <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
+                <!-- <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
                     <i class="bi bi-file-text me-3"></i> Contrato
                 </button>
                 <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
                     <i class="bi bi-receipt me-3"></i> Boletos
-                </button>
+                </button> -->
                 <button class="list-group-item list-group-item-action menu-item active" data-action="resumo">
                     <i class="bi bi-check2-circle me-3"></i> Repertório Escolhido
                 </button>
@@ -98,9 +98,32 @@
         </div>
     </div>
 
+    <div class="modal fade" id="shareModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Arquivo pronto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Seu Word foi gerado.</p>
+                <p class="small text-muted mb-0">Toque em “Compartilhar” para enviar no WhatsApp.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="downloadWordBtn">
+                Baixar
+                </button>
+                <button type="button" class="btn btn-primary" id="shareWordNowBtn">
+                Compartilhar
+                </button>
+            </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./assets/js/db.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
     <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/repertorio.js"></script>
     <script src="./assets/js/utils.js"></script>
@@ -108,6 +131,8 @@
         let menuOffcanvas;
         let confirmModal;
         let currentAction = null;
+        let shareModal;
+        let cachedWord = { file: null, blob: null, fileName: null };
 
         const sections = [
             'Entrada do Noivo',
@@ -125,7 +150,6 @@
             try {
                 $('#loadingOverlay').removeClass('d-none');
                 
-                await DB.init();
                 await Auth.init();
                 await Repertorio.init();
                 
@@ -145,6 +169,7 @@
                 // Inicializar componentes
                 menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
                 confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
 
                 // Carregar resumo
                 await loadResumo();
@@ -189,6 +214,49 @@
                     window.location.href = 'repertorio.html';
                 }
                 confirmModal.hide();
+            });
+
+            $('#downloadWordBtn').on('click', () => {
+                if (!cachedWord.blob) return;
+
+                const url = URL.createObjectURL(cachedWord.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = cachedWord.fileName || 'repertorio.docx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            });
+
+            $('#shareWordNowBtn').on('click', async () => {
+                try {
+                    if (!cachedWord.file) return;
+
+                    const canShareFiles = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [cachedWord.file] }));
+
+                    if (!canShareFiles) {
+                        Utils.showToast('Seu navegador não permite compartilhar arquivo. Use "Baixar".', 'warning');
+                        return;
+                    }
+
+                    // AGORA SIM: share dentro do clique do usuário
+                    await navigator.share({
+                        title: 'Meu Repertório - Vivalld',
+                        text: 'Segue o resumo do meu repertório em Word.',
+                        files: [cachedWord.file]
+                    });
+
+                    shareModal.hide();
+                    Utils.showToast('Compartilhamento iniciado!');
+                } catch (error) {
+                    console.error('Error sharing word:', error);
+
+                    // Se o usuário cancelar, alguns browsers lançam AbortError
+                    if (error && error.name === 'AbortError') return;
+
+                    Utils.showToast('Não foi possível compartilhar. Use "Baixar".', 'warning');
+                }
             });
         }
 
@@ -268,15 +336,18 @@
 
                 // Botões de ação
                 html += `
-                    <div class="resumo-actions mt-4">
-                        <button class="btn btn-outline-primary" id="editRepertoryBtn">
-                            <i class="bi bi-pencil me-2"></i>Editar Repertório
-                        </button>
-                        <button class="btn btn-outline-danger" id="clearRepertoryBtn">
-                            <i class="bi bi-trash me-2"></i>Limpar Tudo
-                        </button>
-                    </div>
-                `;
+                        <div class="resumo-actions mt-4">
+                            <button class="btn btn-outline-primary" id="editRepertoryBtn">
+                                <i class="bi bi-pencil me-2"></i>Editar Repertório
+                            </button>
+                            <button class="btn btn-outline-danger" id="clearRepertoryBtn">
+                                <i class="bi bi-trash me-2"></i>Limpar Tudo
+                            </button>
+                            <button class="btn btn-primary" id="exportWordBtn">
+                                <i class="bi bi-file-earmark-word me-2"></i>Gerar Word
+                            </button>
+                        </div>
+                        `;
             }
 
             html += '</div>';
@@ -302,6 +373,8 @@
                 $('#confirmMessage').text('Tem certeza que deseja limpar todo o repertório? Esta ação não pode ser desfeita.');
                 confirmModal.show();
             });
+
+            $('#exportWordBtn').on('click', exportResumoToWord);
         }
 
         async function removeSong(songId, section) {
@@ -366,6 +439,105 @@
                 }
             }
             return total;
+        }
+
+        async function exportResumoToWord() {
+            try {
+                $('#loadingOverlay').removeClass('d-none');
+
+                const selections = Repertorio.selections || {};
+                const hasSelections = sections.some(s => selections[s] && selections[s].length > 0);
+
+                if (!hasSelections) {
+                    Utils.showToast('Você ainda não selecionou músicas para exportar.', 'warning');
+                    return;
+                }
+
+                const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = window.docx;
+
+                const children = [];
+
+                // Título
+                children.push(
+                    new Paragraph({
+                        heading: HeadingLevel.TITLE,
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: 'Vivalld - Meu Repertório', bold: true })]
+                    })
+                );
+
+                const now = new Date();
+                children.push(
+                    new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: `Gerado em: ${now.toLocaleString('pt-BR')}`, italics: true })]
+                    })
+                );
+
+                children.push(new Paragraph({ text: '' }));
+
+                children.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: `Total de músicas selecionadas: ${getTotalSelectedSongs()}`, bold: true })]
+                    })
+                );
+
+                children.push(new Paragraph({ text: '' }));
+
+                // Conteúdo
+                for (const section of sections) {
+                    const ids = selections[section] || [];
+                    if (!ids.length) continue;
+
+                    children.push(
+                        new Paragraph({
+                            heading: HeadingLevel.HEADING_2,
+                            children: [new TextRun({ text: `${section} (${ids.length}/2)`, bold: true })]
+                        })
+                    );
+
+                    for (const songId of ids) {
+                        const song = await DB.get('songs', songId);
+                        if (!song) continue;
+
+                        const title = (song.title || '').trim();
+                        const artist = (song.artist || '').trim();
+
+                        children.push(
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: '• ', bold: true }),
+                                    new TextRun({ text: title || 'Sem título', bold: true }),
+                                    new TextRun({ text: artist ? ` — ${artist}` : '' })
+                                ]
+                            })
+                        );
+                    }
+
+                    children.push(new Paragraph({ text: '' }));
+                }
+
+                const doc = new Document({ sections: [{ properties: {}, children }] });
+
+                const blob = await Packer.toBlob(doc);
+                const fileName = `Vivalld-Repertorio-${now.toISOString().slice(0, 10)}.docx`;
+                const file = new File([blob], fileName, {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                });
+
+                // Cacheia para compartilhar em um SEGUNDO clique (user gesture garantido)
+                cachedWord = { file, blob, fileName };
+
+                // Abre modal com botões
+                shareModal.show();
+
+                Utils.showToast('Word gerado com sucesso!');
+            } catch (error) {
+                console.error('Error exporting resumo:', error);
+                Utils.showToast('Erro ao gerar Word do repertório', 'danger');
+            } finally {
+                $('#loadingOverlay').addClass('d-none');
+            }
         }
     </script>
 

@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Músicas</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- CSS personalizado -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #0b5ed7) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            margin-bottom: 2rem;
+        }
+
+        .music-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+
+        .music-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+        }
+
+        .music-card .card-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1rem;
+        }
+
+        .music-card .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .music-card .card-body {
+            padding: 1.25rem;
+        }
+
+        .music-info {
+            margin-bottom: 1rem;
+        }
+
+        .music-info p {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .music-info i {
+            width: 20px;
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+
+        .badge-section {
+            background-color: #e7f3ff;
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .audio-preview {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .audio-preview audio {
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-actions .btn {
+            flex: 1;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #e7f3ff;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .upload-area p {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .upload-area small {
+            color: #adb5bd;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .lyrics-preview {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(to bottom, transparent, white);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner.show {
+            display: flex;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .duration-badge {
+            background-color: var(--warning-color);
+            color: #000;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-music-note-beamed"></i>
+                Gerenciar Músicas
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="bi bi-house"></i> Início
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="bi bi-upload"></i> Upload
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">Biblioteca de Músicas</h2>
+                <p class="text-muted mb-0">Gerencie todas as suas músicas em um só lugar</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="bi bi-plus-circle"></i> Nova Música
+            </button>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por título ou artista...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sectionFilter">
+                    <option value="">Todas as seções</option>
+                    <option value="Entrada do Noivo">Entrada do Noivo</option>
+                    <option value="Entrada das Damas">Entrada das Damas</option>
+                    <option value="Entrada da Noiva">Entrada da Noiva</option>
+                    <option value="Salmo">Salmo</option>
+                    <option value="Aclamação">Aclamação</option>
+                    <option value="Comunhão">Comunhão</option>
+                    <option value="Assinatura">Assinatura</option>
+                    <option value="Fotos">Fotos</option>
+                    <option value="Saída do Casal">Saída do Casal</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sortFilter">
+                    <option value="title">Ordenar por Título</option>
+                    <option value="artist">Ordenar por Artista</option>
+                    <option value="duration">Ordenar por Duração</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Music Grid -->
+        <div class="row" id="musicGrid">
+            <!-- Music cards will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-upload"></i> Upload de Nova Música
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Título da Música</label>
+                                <input type="text" class="form-control" id="title" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Artista</label>
+                                <input type="text" class="form-control" id="artist" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Seção</label>
+                                <select class="form-select" id="section">
+                                        <option value="Entrada do Noivo">Entrada do Noivo</option>
+                                        <option value="Entrada das Damas">Entrada das Damas</option>
+                                        <option value="Entrada da Noiva">Entrada da Noiva</option>
+                                        <option value="Salmo">Salmo</option>
+                                        <option value="Aclamação">Aclamação</option>
+                                        <option value="Comunhão">Comunhão</option>
+                                        <option value="Assinatura">Assinatura</option>
+                                        <option value="Fotos">Fotos</option>
+                                        <option value="Saída do Casal">Saída do Casal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Duração (segundos)</label>
+                                <input type="number" class="form-control" id="duration" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Letra da Música</label>
+                            <textarea class="form-control" id="lyrics" rows="4"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Arquivo de Áudio</label>
+                            <div class="upload-area" id="uploadArea">
+                                <i class="bi bi-cloud-upload"></i>
+                                <p>Arraste e solte o arquivo de áudio aqui ou clique para selecionar</p>
+                                <small>Suporta: MP3, WAV, OGG (Max: 10MB)</small>
+                                <input type="file" class="d-none" id="audioFile" accept="audio/*">
+                            </div>
+                            <div id="fileInfo" class="mt-2 d-none">
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle"></i> Arquivo selecionado: <span id="fileName"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadMusic()">
+                        <i class="bi bi-cloud-upload"></i> Enviar Música
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> Editar Música
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Título da Música</label>
+                                <input type="text" class="form-control" id="editTitle" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Artista</label>
+                                <input type="text" class="form-control" id="editArtist" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Seção</label>
+                                <select class="form-select" id="editSection">
+                                    <option value="Entrada do Noivo">Entrada do Noivo</option>
+                                    <option value="Entrada das Damas">Entrada das Damas</option>
+                                    <option value="Entrada da Noiva">Entrada da Noiva</option>
+                                    <option value="Salmo">Salmo</option>
+                                    <option value="Aclamação">Aclamação</option>
+                                    <option value="Comunhão">Comunhão</option>
+                                    <option value="Assinatura">Assinatura</option>
+                                    <option value="Fotos">Fotos</option>
+                                    <option value="Saída do Casal">Saída do Casal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Duração (segundos)</label>
+                                <input type="number" class="form-control" id="editDuration" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Letra da Música</label>
+                            <textarea class="form-control" id="editLyrics" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMusic()">
+                        <i class="bi bi-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Lyrics Modal -->
+    <div class="modal fade" id="lyricsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-music-note"></i> <span id="lyricsSongTitle"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="lyricsContent" style="white-space: pre-wrap; font-family: inherit;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript personalizado -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (necessário para as chamadas AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script src="./assets/js/auth.js"></script>  <!-- Auth primeiro -->
+    
+    <!-- JavaScript personalizado com integração à API -->
+<script>
+
+    // Headers padrão para as requisições
+    function getDefaultHeaders() {
+        return {
+            'Authorization': `Bearer ${Auth.token}`,
+            'Accept': 'application/json'
+        };
+    }
+    
+    // Função para formatar duração
+    function formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    // Função para mostrar toast
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        const toastId = 'toast-' + Date.now();
+        const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        
+        const toast = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.innerHTML += toast;
+        
+        const toastElement = document.getElementById(toastId);
+        const bsToast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        bsToast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    // Função para carregar músicas da API
+    async function loadSongs() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const sectionFilter = document.getElementById('sectionFilter').value;
+        const sortFilter = document.getElementById('sortFilter').value;
+        
+        try {
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            // Buscar músicas da API
+            const response = await fetch(`${API_BASE}/songs`, {
+                headers: getDefaultHeaders()
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                let songs = result.data || [];
+                
+                // Aplicar filtros localmente
+                let filteredSongs = songs.filter(song => {
+                    const matchesSearch = song.title.toLowerCase().includes(searchTerm) || 
+                                         (song.artist && song.artist.toLowerCase().includes(searchTerm));
+                    const matchesSection = !sectionFilter || song.section === sectionFilter;
+                    return matchesSearch && matchesSection;
+                });
+                
+                // Ordenação
+                filteredSongs.sort((a, b) => {
+                    if (sortFilter === 'title') return a.title.localeCompare(b.title);
+                    if (sortFilter === 'artist') return (a.artist || '').localeCompare(b.artist || '');
+                    if (sortFilter === 'duration') return (a.duration || 0) - (b.duration || 0);
+                    return 0;
+                });
+                
+                renderSongs(filteredSongs);
+            } else {
+                showToast('Erro ao carregar músicas', 'danger');
+            }
+        } catch (error) {
+            console.error('Error loading songs:', error);
+            showToast('Erro de conexão com o servidor', 'danger');
+        } finally {
+            document.getElementById('loadingSpinner').classList.remove('show');
+        }
+    }
+
+    // Função para renderizar as músicas
+    function renderSongs(songs) {
+        const musicGrid = document.getElementById('musicGrid');
+        musicGrid.innerHTML = '';
+        
+        if (songs.length === 0) {
+            musicGrid.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle"></i> Nenhuma música encontrada
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        songs.forEach(song => {
+            // Construir URL completa do áudio
+            const audioUrl = song.audio_url && song.audio_url.startsWith('http') 
+                ? song.audio_url 
+                : `https://vivalld.com.br/api/${song.audio_url}`;
+            
+            const card = `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="music-card">
+                        <div class="card-header">
+                            <h5 class="card-title">${song.title}</h5>
+                            <small><i class="bi bi-person"></i> ${song.artist || 'Artista não informado'}</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="music-info">
+                                <p>
+                                    <i class="bi bi-tag"></i>
+                                    <span class="badge-section">Seção ${song.section}</span>
+                                </p>
+                                <p>
+                                    <i class="bi bi-clock"></i>
+                                    <span class="duration-badge">${formatDuration(song.duration || 0)}</span>
+                                </p>
+                                <p>
+                                    <i class="bi bi-music-note"></i>
+                                    ID: ${song.song_id}
+                                </p>
+                            </div>
+                            
+                            <div class="audio-preview">
+                                <audio controls preload="none">
+                                    <source src="${audioUrl}" type="audio/mpeg">
+                                    Seu navegador não suporta o elemento de áudio.
+                                </audio>
+                            </div>
+                            
+                            <div class="btn-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewLyrics('${song.song_id}')">
+                                    <i class="bi bi-file-text"></i> Letra
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="editMusic('${song.song_id}')">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteMusic('${song.song_id}')">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            musicGrid.innerHTML += card;
+        });
+    }
+
+    // Upload Area
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const audioFile = document.getElementById('audioFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        
+        uploadArea.addEventListener('click', () => {
+            audioFile.click();
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#0d6efd';
+            uploadArea.style.backgroundColor = '#e7f3ff';
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#dee2e6';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#dee2e6';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('audio/')) {
+                audioFile.files = e.dataTransfer.files;
+                fileName.textContent = file.name;
+                fileInfo.classList.remove('d-none');
+            }
+        });
+        
+        audioFile.addEventListener('change', () => {
+            if (audioFile.files.length > 0) {
+                fileName.textContent = audioFile.files[0].name;
+                fileInfo.classList.remove('d-none');
+            }
+        });
+        
+        // Event listeners para filtros
+        document.getElementById('searchInput').addEventListener('input', loadSongs);
+        document.getElementById('sectionFilter').addEventListener('change', loadSongs);
+        document.getElementById('sortFilter').addEventListener('change', loadSongs);
+    });
+
+    // Função para upload de música
+    async function uploadMusic() {
+        const title = document.getElementById('title').value;
+        const artist = document.getElementById('artist').value;
+        const section = document.getElementById('section').value;
+        const duration = document.getElementById('duration').value;
+        const lyrics = document.getElementById('lyrics').value;
+        const audioFile = document.getElementById('audioFile').files[0];
+        
+        if (!title || !artist || !duration || !audioFile) {
+            showToast('Preencha todos os campos obrigatórios', 'danger');
+            return;
+        }
+        
+        document.getElementById('loadingSpinner').classList.add('show');
+        
+        try {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('artist', artist);
+            formData.append('section', section);
+            formData.append('duration', duration);
+            formData.append('lyrics', lyrics || '');
+            formData.append('audio', audioFile);
+            
+            const response = await fetch(`${API_BASE}/songs`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${Auth.token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Música enviada com sucesso!');
+                bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                
+                // Limpar formulário
+                document.getElementById('uploadForm').reset();
+                document.getElementById('fileInfo').classList.add('d-none');
+                
+                // Recarregar lista
+                await loadSongs();
+            } else {
+                showToast(result.message || 'Erro ao enviar música', 'danger');
+            }
+        } catch (error) {
+            console.error('Error uploading:', error);
+            showToast('Erro de conexão com o servidor', 'danger');
+        } finally {
+            document.getElementById('loadingSpinner').classList.remove('show');
+        }
+    }
+
+    // Função para buscar uma música específica
+    async function getSongById(songId) {
+        try {
+            const response = await fetch(`${API_BASE}/songs/${songId}`, {
+                headers: getDefaultHeaders()
+            });
+
+            const result = await response.json();
+            return result.success ? result.data : null;
+        } catch (error) {
+            console.error('Error getting song:', error);
+            return null;
+        }
+    }
+
+    // Função para editar música
+    async function editMusic(songId) {
+        const song = await getSongById(songId);
+        if (!song) {
+            showToast('Música não encontrada', 'danger');
+            return;
+        }
+        
+        // Usar o ID numérico da tabela para edição
+        document.getElementById('editId').value = song.id;
+        document.getElementById('editTitle').value = song.title;
+        document.getElementById('editArtist').value = song.artist || '';
+        document.getElementById('editSection').value = song.section;
+        document.getElementById('editDuration').value = song.duration || 0;
+        document.getElementById('editLyrics').value = song.lyrics || '';
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    // Função para atualizar música
+    async function updateMusic() {
+        const id = document.getElementById('editId').value;
+        const title = document.getElementById('editTitle').value;
+        const artist = document.getElementById('editArtist').value;
+        const section = document.getElementById('editSection').value;
+        const duration = document.getElementById('editDuration').value;
+        const lyrics = document.getElementById('editLyrics').value;
+        
+        if (!title || !artist || !duration) {
+            showToast('Preencha todos os campos obrigatórios', 'danger');
+            return;
+        }
+        
+        document.getElementById('loadingSpinner').classList.add('show');
+        
+        try {
+            const response = await fetch(`${API_BASE}/songs/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.token}`,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    title,
+                    artist,
+                    section,
+                    duration: parseInt(duration),
+                    lyrics
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Música atualizada com sucesso!');
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                await loadSongs();
+            } else {
+                showToast(result.message || 'Erro ao atualizar', 'danger');
+            }
+        } catch (error) {
+            console.error('Error updating:', error);
+            showToast('Erro de conexão com o servidor', 'danger');
+        } finally {
+            document.getElementById('loadingSpinner').classList.remove('show');
+        }
+    }
+
+    // Função para deletar música
+    async function deleteMusic(songId) {
+        if (confirm('Tem certeza que deseja excluir esta música?')) {
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/songs/${songId}`, {
+                    method: 'DELETE',
+                    headers: getDefaultHeaders()
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Música excluída com sucesso!');
+                    await loadSongs();
+                } else {
+                    showToast(result.message || 'Erro ao excluir', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+    }
+
+    // Função para visualizar letra
+    async function viewLyrics(songId) {
+        const song = await getSongById(songId);
+        if (!song) return;
+        
+        document.getElementById('lyricsSongTitle').textContent = `${song.title} - ${song.artist || 'Artista não informado'}`;
+        document.getElementById('lyricsContent').textContent = song.lyrics || 'Letra não disponível';
+        
+        new bootstrap.Modal(document.getElementById('lyricsModal')).show();
+    }
+
+    // Inicialização quando a página carregar
+    $(document).ready(async () => {
+        try {
+            // Inicializa Auth (pega token do localStorage e valida)
+            await Auth.init();
+            
+            // DEBUG - verificar se token foi carregado
+            console.log('Token após init:', Auth.token);
+            console.log('User após init:', Auth.currentUser);
+            
+            // Se não estiver logado, vai para login
+            if (!Auth.currentUser || !Auth.token) {
+                console.log('Usuário não autenticado, redirecionando para login');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Carregar músicas inicialmente
+            await loadSongs();
+
+        } catch (error) {
+            console.error('Erro fatal na inicialização:', error);
+            showToast('Erro ao carregar a página. Faça login novamente.', 'danger');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        }
+    });
+</script>
+</body>
+</html>

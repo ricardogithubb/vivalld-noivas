@@ -1,103 +1,161 @@
+const API_BASE = 'https://vivalld.com.br/api/api';
+
 const Auth = {
     currentUser: null,
+    token: null,
 
     async init() {
-        try {
-            // Aguardar DB estar pronto
-            if (!DB.isInitialized) {
-                await new Promise(resolve => setTimeout(resolve, 300));
+        this.token = localStorage.getItem('auth_token');
+        this.currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        
+        if(this.token && this.currentUser) {
+            try {
+                await this.validateToken();
+            } catch(e) {
+                await this.logout();
             }
-            
-            // Check for existing session
-            const session = await DB.get('session', 'currentUser');
-            if (session) {
-                this.currentUser = session;
-            }
-            return this.currentUser;
-        } catch (error) {
-            console.error('Error initializing auth:', error);
-            return null;
         }
+        
+        return this.currentUser;
+    },
+
+    async validateToken() {
+        const response = await fetch(`${API_BASE}/check-auth`, {
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Accept': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if(!result.success) {
+            throw new Error('Token inválido');
+        }
+        
+        return result;
     },
 
     async login(email, password) {
-        // Simple validation - in real app would validate against backend
-        if (!email || !password) {
-            throw new Error('Por favor, preencha todos os campos');
+        const response = await fetch(`${API_BASE}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const result = await response.json();
+
+        if(!result.success) {
+            throw new Error(result.message);
         }
 
-        // Create user session
-        const user = {
-            email: email,
-            loggedInAt: new Date().toISOString(),
-            userId: 'user_' + Date.now()
-        };
-
-        await DB.set('session', 'currentUser', user);
-        this.currentUser = user;
+        this.currentUser = result.data.user;
+        this.token = result.data.token;
+        this.type  = result.data.type;
         
-        return user;
+        localStorage.setItem('auth_token', this.token);
+        localStorage.setItem('user', JSON.stringify(this.currentUser));
+        
+        return result.data;
     },
 
     async logout() {
-        await DB.delete('session', 'currentUser');
-        this.currentUser = null;
-        
-        // Stop any playing audio
-        if (window.Repertorio && window.Repertorio.stopAllAudio) {
-            window.Repertorio.stopAllAudio();
+        if(this.token) {
+            try {
+                await fetch(`${API_BASE}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+            } catch(e) {
+                console.error('Erro no logout:', e);
+            }
         }
+        
+        this.currentUser = null;
+        this.token = null;
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
     },
 
-    async checkFirstTimeUser() {
+    async getNextScreen() {
+        if(!this.currentUser || !this.token) {
+            return 'login';
+        }
+
+        if(this.type == 'admin'){
+            return 'admin';
+        }
+
         try {
-            const term1 = await DB.get('terms', 'termo1Aceito');
-            const term2 = await DB.get('terms', 'termo2Aceito');
+            const response = await fetch(`${API_BASE}/terms`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Accept': 'application/json'
+                }
+            });
             
-            return {
-                termo1Aceito: term1 || false,
-                termo2Aceito: term2 || false,
-                isFirstLogin: !term1 || !term2
-            };
-        } catch (error) {
-            console.error('Error checking first time user:', error);
-            return {
-                termo1Aceito: false,
-                termo2Aceito: false,
-                isFirstLogin: true
-            };
+            const result = await response.json();
+            
+            if(!result.success) {
+                return 'login';
+            }
+
+            const terms = result.data;
+
+            if(!terms.termo1Aceito) {
+                return 'termo1';
+            } else if(!terms.termo2Aceito) {
+                return 'termo2';
+            } else {
+                return 'repertorio';
+            }
+        } catch(error) {
+            console.error('Error getting next screen:', error);
+            return 'login';
         }
     },
 
     async acceptTerm(termNumber) {
-        await DB.set('terms', `termo${termNumber}Aceito`, true);
-    },
+        const termType = `termo${termNumber}`;
+        
+        const response = await fetch(`${API_BASE}/terms`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ termType })
+        });
 
-    async resetTerms() {
-        await DB.set('terms', 'termo1Aceito', false);
-        await DB.set('terms', 'termo2Aceito', false);
-    },
-
-    async getNextScreen() {
-        try {
-            const terms = await this.checkFirstTimeUser();
-            
-            if (!terms.termo1Aceito) {
-                return 'termo1';
-            } else if (!terms.termo2Aceito) {
-                return 'termo2';
-            } else {
-                // Check if there's saved progress
-                const progress = await DB.get('wizardProgress', 'currentSection');
-                if (progress !== undefined && progress !== null) {
-                    return 'repertorio';
-                }
-                return 'repertorio';
-            }
-        } catch (error) {
-            console.error('Error getting next screen:', error);
-            return 'termo1'; // Default to first term on error
+        const result = await response.json();
+        
+        if(!result.success) {
+            throw new Error(result.message);
         }
+    },
+
+    async checkFirstTimeUser() {
+        const response = await fetch(`${API_BASE}/terms`, {
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        
+        if(!result.success) {
+            throw new Error(result.message);
+        }
+
+        return result.data;
     }
 };
 

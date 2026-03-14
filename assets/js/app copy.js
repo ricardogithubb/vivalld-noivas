@@ -3,17 +3,17 @@ const App = {
     menuOffcanvas: null,
 
     async init() {
-        // Initialize Auth (não precisa mais de DB.init)
+        // Initialize DB
+        await DB.init();
+        
+        // Initialize Auth
         await Auth.init();
         
         // Initialize Repertorio
         await Repertorio.init();
         
         // Setup menu
-        const menuElement = document.getElementById('menuOffcanvas');
-        if (menuElement) {
-            this.menuOffcanvas = new bootstrap.Offcanvas(menuElement);
-        }
+        this.menuOffcanvas = new bootstrap.Offcanvas(document.getElementById('menuOffcanvas'));
         
         // Setup event listeners
         this.setupEventListeners();
@@ -30,12 +30,12 @@ const App = {
         $('#nextButton').on('click', () => this.handleNext());
 
         // Menu button
-        $('#menuButton').on('click', () => this.menuOffcanvas?.show());
+        $('#menuButton').on('click', () => this.menuOffcanvas.show());
 
         // Menu items
         $('.menu-item').on('click', (e) => {
             const action = $(e.currentTarget).data('action');
-            this.menuOffcanvas?.hide();
+            this.menuOffcanvas.hide();
             
             if (action === 'logout') {
                 this.logout();
@@ -52,6 +52,7 @@ const App = {
 
     async checkAuthAndNavigate() {
         if (Auth.currentUser) {
+            // User is logged in, check terms
             const nextScreen = await Auth.getNextScreen();
             window.location.hash = nextScreen;
         } else {
@@ -144,7 +145,7 @@ const App = {
             case 'contrato':
                 return this.renderContrato();
             case 'boletos':
-                return this.renderBoletos();
+                return await Boletos.render();
             case 'resumo':
                 return await Repertorio.getSummary();
             default:
@@ -174,6 +175,10 @@ const App = {
                             Entrar
                         </button>
                     </form>
+                    
+                    <p class="text-center text-muted small mt-4">
+                        Use qualquer e-mail/senha para teste
+                    </p>
                 </div>
             </div>
         `;
@@ -291,60 +296,6 @@ const App = {
         `;
     },
 
-    async renderBoletos() {
-        try {
-            const response = await fetch(`${API_BASE}/bills`, {
-                headers: {
-                    'Authorization': `Bearer ${Auth.token}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            const bills = result.success ? result.data : [];
-
-            let html = `
-                <div class="section-card fade-in">
-                    <h2 class="section-title">Boletos</h2>
-                    <div class="bills-list">
-            `;
-
-            if (bills.length === 0) {
-                html += '<p class="text-center text-muted">Nenhum boleto encontrado</p>';
-            } else {
-                bills.forEach(bill => {
-                    const statusClass = bill.status === 'pago' ? 'badge-success' : 
-                                       bill.status === 'vencido' ? 'badge-danger' : 'badge-warning';
-                    
-                    html += `
-                        <div class="bill-card">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h3 class="bill-title">${bill.description}</h3>
-                                <span class="badge ${statusClass}">${bill.status}</span>
-                            </div>
-                            <div class="bill-details">
-                                <p><strong>Vencimento:</strong> ${new Date(bill.dueDate).toLocaleDateString('pt-BR')}</p>
-                                <p><strong>Valor:</strong> ${bill.amount}</p>
-                                ${bill.barCode ? `
-                                    <div class="bill-barcode">
-                                        <p class="mb-1"><strong>Código de barras:</strong></p>
-                                        <code class="barcode-number">${bill.barCode}</code>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            html += '</div></div>';
-            return html;
-        } catch (error) {
-            console.error('Error loading bills:', error);
-            return '<div class="alert alert-danger">Erro ao carregar boletos</div>';
-        }
-    },
-
     async handleBack() {
         switch(this.currentView) {
             case 'termo1':
@@ -416,14 +367,11 @@ $(document).ready(() => {
         const password = $('#password').val();
         
         try {
-            $('#loadingOverlay').removeClass('d-none');
             await Auth.login(email, password);
             const nextScreen = await Auth.getNextScreen();
             window.location.hash = nextScreen;
         } catch (error) {
             alert(error.message);
-        } finally {
-            $('#loadingOverlay').addClass('d-none');
         }
     });
     
@@ -432,5 +380,3 @@ $(document).ready(() => {
         $('#nextButton').prop('disabled', !$(this).is(':checked'));
     });
 });
-
-window.App = App;

@@ -78,12 +78,12 @@
                 <button class="list-group-item list-group-item-action menu-item" data-action="repertorio">
                     <i class="bi bi-music-note-beamed me-3"></i> Repertório
                 </button>
-                <!-- <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
+                <button class="list-group-item list-group-item-action menu-item" data-action="contrato">
                     <i class="bi bi-file-text me-3"></i> Contrato
-                </button> -->
-                <!-- <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
+                </button>
+                <button class="list-group-item list-group-item-action menu-item" data-action="boletos">
                     <i class="bi bi-receipt me-3"></i> Boletos
-                </button> -->
+                </button>
                 <button class="list-group-item list-group-item-action menu-item" data-action="resumo">
                     <i class="bi bi-check2-circle me-3"></i> Repertório Escolhido
                 </button>
@@ -98,7 +98,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./assets/js/musicas.js"></script>
-    <!-- <script src="./assets/js/db.js"></script> -->
+    <script src="./assets/js/db.js"></script>
     <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/repertorio.js"></script>
     <script src="./assets/js/utils.js"></script>
@@ -119,7 +119,7 @@
 
 
         $(document).ready(async () => {
-            // await DB.init();
+            await DB.init();
             await Auth.init();
             await Repertorio.init();
             
@@ -150,22 +150,7 @@
                 if (currentSectionIndex > 0) {
                     currentSectionIndex--;
                     Repertorio.currentSectionIndex = currentSectionIndex;
-                    
-                    // Usar API em vez de DB.set
-                    try {
-                        await fetch(`${API_BASE}/progress`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${Auth.token}`,
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({ currentSection: currentSectionIndex })
-                        });
-                    } catch (error) {
-                        console.error('Erro ao salvar progresso:', error);
-                    }
-                    
+                    await DB.set('wizardProgress', 'currentSection', currentSectionIndex);
                     await loadCurrentSection();
                 } else {
                     window.location.href = 'termo2.html';
@@ -176,22 +161,7 @@
                 if (currentSectionIndex < sections.length - 1) {
                     currentSectionIndex++;
                     Repertorio.currentSectionIndex = currentSectionIndex;
-                    
-                    // Usar API em vez de DB.set
-                    try {
-                        await fetch(`${API_BASE}/progress`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${Auth.token}`,
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({ currentSection: currentSectionIndex })
-                        });
-                    } catch (error) {
-                        console.error('Erro ao salvar progresso:', error);
-                    }
-                    
+                    await DB.set('wizardProgress', 'currentSection', currentSectionIndex);
                     await loadCurrentSection();
                 } else {
                     window.location.href = 'resumo.html';
