@@ -150,6 +150,7 @@
             try {
                 $('#loadingOverlay').removeClass('d-none');
                 
+                await DB.init();
                 await Auth.init();
                 await Repertorio.init();
                 
