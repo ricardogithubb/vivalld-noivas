@@ -119,17 +119,13 @@
         let cachedWord = { file: null, blob: null, fileName: null };
         let songsMap = {};
 
-        const sections = [
-            'Entrada do Noivo',
-            'Entrada das Damas',
-            'Entrada da Noiva',
-            'Salmo',
-            'Aclamação',
-            'Comunhão',
-            'Assinatura',
-            'Fotos',
-            'Saída do Casal'
-        ];
+        let sections = [];
+
+        function getSections() {
+            return Array.isArray(Repertorio.sections)
+                ? Repertorio.sections.map(s => s.name)
+                : [];
+        }
 
         $(document).ready(async () => {
             try {
@@ -137,6 +133,7 @@
 
                 await Auth.init();
                 await Repertorio.init();
+                sections = getSections();
 
                 if (!Auth.currentUser) {
                     window.location.href = 'login.html';
@@ -264,6 +261,7 @@
         }
 
         async function loadResumo() {
+            sections = getSections();
             const selections = Repertorio.selections || {};
             let hasSelections = false;
 
@@ -490,6 +488,7 @@
         }
 
         function getTotalSelectedSongs() {
+            sections = getSections();
             let total = 0;
             for (const section of sections) {
                 if (Repertorio.selections[section]) {
@@ -502,6 +501,8 @@
         async function exportResumoToWord() {
             try {
                 $('#loadingOverlay').removeClass('d-none');
+
+                sections = getSections();
 
                 const selections = Repertorio.selections || {};
                 const hasSelections = sections.some(s => selections[s] && selections[s].length > 0);
