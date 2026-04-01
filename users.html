@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #0b5ed7) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            margin-bottom: 2rem;
+        }
+
+        .user-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+        }
+
+        .user-card .card-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1rem;
+        }
+
+        .user-card .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .user-card .card-body {
+            padding: 1.25rem;
+        }
+
+        .user-info p {
+            margin-bottom: 0.5rem;
+            color: #6c757d;
+        }
+
+        .user-info i {
+            width: 20px;
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-badge.inactive {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .role-badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-actions .btn {
+            flex: 1;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner.show {
+            display: flex;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .password-strength.weak {
+            background-color: var(--danger-color);
+            width: 33%;
+        }
+
+        .password-strength.medium {
+            background-color: var(--warning-color);
+            width: 66%;
+        }
+
+        .password-strength.strong {
+            background-color: var(--success-color);
+            width: 100%;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            margin-bottom: 2rem;
+        }
+
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .table thead th {
+            font-weight: 500;
+            border: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-initials {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="admin.html">
+                <i class="bi bi-music-note-beamed"></i>
+                Gerenciar Músicas
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin.html">
+                            <i class="bi bi-music-note"></i> Músicas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="users.html">
+                            <i class="bi bi-people"></i> Usuários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">Gerenciar Usuários</h2>
+                <p class="text-muted mb-0">Administre os usuários do sistema</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal" onclick="openCreateModal()">
+                <i class="bi bi-person-plus"></i> Novo Usuário
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nome, email ou usuário...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="roleFilter">
+                        <option value="">Todas as funções</option>
+                        <option value="admin">Administrador</option>
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Visualizador</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Todos os status</option>
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                        <i class="bi bi-eraser"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="mb-3">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="gridViewBtn" onclick="toggleView('grid')">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Grid
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="tableViewBtn" onclick="toggleView('table')">
+                    <i class="bi bi-table"></i> Tabela
+                </button>
+            </div>
+        </div>
+
+        <!-- Users Grid View -->
+        <div id="usersGridView" class="row">
+            <!-- Users will be loaded here -->
+        </div>
+
+        <!-- Users Table View -->
+        <div id="usersTableView" class="d-none">
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                            <th>Status</th>
+                            <th>Último Acesso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal (Create/Edit) -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalTitle">
+                        <i class="bi bi-person-plus"></i> Novo Usuário
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nome de Usuário *</label>
+                            <input type="text" class="form-control" id="username" required maxlength="50">
+                            <small class="text-muted">Máximo 50 caracteres</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nome Completo *</label>
+                            <input type="text" class="form-control" id="fullname" required maxlength="100">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" required maxlength="100">
+                        </div>
+
+                        <div class="mb-3" id="passwordFields">
+                            <label class="form-label">Senha *</label>
+                            <input type="password" class="form-control" id="password" minlength="6">
+                            <div class="password-strength" id="passwordStrength"></div>
+                            <small class="text-muted">Mínimo 6 caracteres</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Função</label>
+                            <select class="form-select" id="role">
+                                <option value="editor">Editor</option>
+                                <option value="admin">Administrador</option>
+                                <option value="viewer">Visualizador</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="status">
+                                <option value="active">Ativo</option>
+                                <option value="inactive">Inativo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">
+                        <i class="bi bi-save"></i> Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="passwordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key"></i> Alterar Senha
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordForm">
+                        <input type="hidden" id="passwordUserId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nova Senha *</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                            <div class="password-strength" id="newPasswordStrength"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirmar Nova Senha *</label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">
+                        <i class="bi bi-key"></i> Alterar Senha
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View User Modal -->
+    <div class="modal fade" id="viewUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-circle"></i> Detalhes do Usuário
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="user-avatar" id="viewUserAvatar"></div>
+                        <h4 id="viewUserFullname"></h4>
+                        <p class="text-muted" id="viewUserUsername"></p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="fw-bold">Email:</label>
+                            <p id="viewUserEmail"></p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold">Função:</label>
+                            <p><span class="role-badge" id="viewUserRole"></span></p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold">Status:</label>
+                            <p><span class="status-badge" id="viewUserStatus"></span></p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold">Criado em:</label>
+                            <p id="viewUserCreated"></p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold">Último acesso:</label>
+                            <p id="viewUserLastLogin"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script src="./assets/js/auth.js"></script>
+    
+    <script>
+        let currentView = 'grid';
+        let usersTable = null;
+
+        // Função para mostrar toast
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            
+            const toast = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.innerHTML += toast;
+            
+            const toastElement = document.getElementById(toastId);
+            const bsToast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            bsToast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+
+        // Headers padrão
+        function getDefaultHeaders() {
+            return {
+                'Authorization': `Bearer ${Auth.token}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Função para obter iniciais do nome
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .map(word => word[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
+
+        // Função para formatar data
+        function formatDate(dateString) {
+            if (!dateString) return 'Nunca';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+        }
+
+        // Função para verificar força da senha
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            
+            if (password.length >= 6) strength += 1;
+            if (password.length >= 8) strength += 1;
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            return strength;
+        }
+
+        // Monitorar força da senha
+        document.getElementById('password')?.addEventListener('input', function(e) {
+            const strength = checkPasswordStrength(e.target.value);
+            const strengthBar = document.getElementById('passwordStrength');
+            
+            strengthBar.className = 'password-strength';
+            if (strength <= 2) {
+                strengthBar.classList.add('weak');
+            } else if (strength <= 4) {
+                strengthBar.classList.add('medium');
+            } else {
+                strengthBar.classList.add('strong');
+            }
+        });
+
+        document.getElementById('newPassword')?.addEventListener('input', function(e) {
+            const strength = checkPasswordStrength(e.target.value);
+            const strengthBar = document.getElementById('newPasswordStrength');
+            
+            strengthBar.className = 'password-strength';
+            if (strength <= 2) {
+                strengthBar.classList.add('weak');
+            } else if (strength <= 4) {
+                strengthBar.classList.add('medium');
+            } else {
+                strengthBar.classList.add('strong');
+            }
+        });
+
+        // Carregar usuários
+        async function loadUsers() {
+            try {
+                document.getElementById('loadingSpinner').classList.add('show');
+
+                console.log(`${API_BASE}/users`);
+                
+                const response = await fetch(`${API_BASE}/users`, {
+                    headers: getDefaultHeaders()
+                });
+
+                console.log(response);
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const users = result.data || [];
+                    
+                    // Adaptar os dados para o formato esperado pelo frontend
+                    const adaptedUsers = users.map(user => ({
+                        id: user.id,
+                        username: user.username || user.email, // Usando email como username se não tiver username
+                        fullname: user.fullname || user.name || user.email,
+                        email: user.email,
+                        phone: user.phone || '',
+                        role: user.role || user.type || 'editor',
+                        status: user.status || 'active',
+                        created_at: user.created_at,
+                        updated_at: user.updated_at,
+                        last_login: user.last_login || null
+                    }));
+                    
+                    applyFilters(adaptedUsers);
+                } else {
+                    showToast('Erro ao carregar usuários', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Aplicar filtros
+        function applyFilters(users) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filteredUsers = users.filter(user => {
+                const matchesSearch = user.username.toLowerCase().includes(searchTerm) ||
+                                     user.fullname.toLowerCase().includes(searchTerm) ||
+                                     user.email.toLowerCase().includes(searchTerm);
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                const matchesStatus = !statusFilter || user.status === statusFilter;
+                
+                return matchesSearch && matchesRole && matchesStatus;
+            });
+            
+            renderGridView(filteredUsers);
+            renderTableView(filteredUsers);
+        }
+
+        // Renderizar grid view
+        function renderGridView(users) {
+            const gridView = document.getElementById('usersGridView');
+            
+            if (users.length === 0) {
+                gridView.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle"></i> Nenhum usuário encontrado
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            gridView.innerHTML = users.map(user => {
+                // Usar os campos disponíveis
+                const fullname = user.fullname || user.name || user.email;
+                const username = user.username || user.email;
+                const role = user.role || user.type || 'editor';
+                const status = user.status || 'active';
+                
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="user-card">
+                            <div class="card-header">
+                                <h5 class="card-title">${fullname}</h5>
+                                <small><i class="bi bi-at"></i> ${username}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <div class="user-avatar">${getInitials(fullname)}</div>
+                                </div>
+                                
+                                <div class="user-info">
+                                    <p>
+                                        <i class="bi bi-envelope"></i>
+                                        ${user.email}
+                                    </p>
+                                    <p>
+                                        <i class="bi bi-shield"></i>
+                                        <span class="role-badge">${role === 'admin' ? 'Administrador' : role === 'editor' ? 'Editor' : 'Visualizador'}</span>
+                                    </p>
+                                    <p>
+                                        <i class="bi bi-circle"></i>
+                                        <span class="status-badge ${status}">${status === 'active' ? 'Ativo' : 'Inativo'}</span>
+                                    </p>
+                                    ${user.phone ? `
+                                    <p>
+                                        <i class="bi bi-telephone"></i>
+                                        ${user.phone}
+                                    </p>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="btn-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewUser('${user.id}')">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="editUser('${user.id}')">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="openPasswordModal('${user.id}')">
+                                        <i class="bi bi-key"></i> Senha
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.id}')">
+                                        <i class="bi bi-trash"></i> Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Renderizar table view
+        function renderTableView(users) {
+            const tableBody = document.getElementById('usersTableBody');
+            
+            tableBody.innerHTML = users.map(user => {
+                const fullname = user.fullname || user.name || user.email;
+                const username = user.username || user.email;
+                const role = user.role || user.type || 'editor';
+                const status = user.status || 'active';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-initials me-2">${getInitials(fullname)}</div>
+                                <div>${username}</div>
+                            </div>
+                        </td>
+                        <td>${fullname}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <span class="role-badge">${role === 'admin' ? 'Administrador' : role === 'editor' ? 'Editor' : 'Visualizador'}</span>
+                        </td>
+                        <td>
+                            <span class="status-badge ${status}">${status === 'active' ? 'Ativo' : 'Inativo'}</span>
+                        </td>
+                        <td>${formatDate(user.last_login)}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewUser('${user.id}')" title="Visualizar">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="editUser('${user.id}')" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="openPasswordModal('${user.id}')" title="Alterar Senha">
+                                    <i class="bi bi-key"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.id}')" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Alternar visualização
+        function toggleView(view) {
+            currentView = view;
+            
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+            
+            document.getElementById('usersGridView').classList.toggle('d-none', view !== 'grid');
+            document.getElementById('usersTableView').classList.toggle('d-none', view !== 'table');
+            
+            if (view === 'table' && !usersTable) {
+                usersTable = new DataTable('#usersTable', {
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                    },
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]]
+                });
+            }
+        }
+
+        // Abrir modal de criação
+        function openCreateModal() {
+            document.getElementById('userModalTitle').innerHTML = '<i class="bi bi-person-plus"></i> Novo Usuário';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('password').required = true;
+            document.getElementById('passwordFields').style.display = 'block';
+        }
+
+        // Editar usuário
+        async function editUser(userId) {
+            try {
+                document.getElementById('loadingSpinner').classList.add('show');
+
+                const response = await fetch(`${API_BASE}/users/${userId}`, {
+                    headers: getDefaultHeaders()
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const user = result.data;
+                    
+                    // Adaptar os dados recebidos
+                    const adaptedUser = {
+                        id: user.id,
+                        username: user.username || user.email,
+                        fullname: user.fullname || user.name || user.email,
+                        email: user.email,
+                        phone: user.phone || '',
+                        role: user.role || user.type || 'editor',
+                        status: user.status || 'active'
+                    };
+                    
+                    document.getElementById('userModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Editar Usuário';
+                    document.getElementById('userId').value = adaptedUser.id;
+                    document.getElementById('username').value = adaptedUser.username;
+                    document.getElementById('fullname').value = adaptedUser.fullname;
+                    document.getElementById('email').value = adaptedUser.email;
+                    document.getElementById('role').value = adaptedUser.role;
+                    document.getElementById('status').value = adaptedUser.status;
+                    
+                    document.getElementById('password').required = false;
+                    document.getElementById('passwordFields').style.display = 'none';
+                    
+                    new bootstrap.Modal(document.getElementById('userModal')).show();
+                } else {
+                    showToast('Erro ao carregar usuário', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading user:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Visualizar usuário
+        async function viewUser(userId) {
+            try {
+                document.getElementById('loadingSpinner').classList.add('show');
+                
+                const response = await fetch(`${API_BASE}/users/${userId}`, {
+                    headers: getDefaultHeaders()
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    const user = result.data;
+                    
+                    // Adaptar os dados
+                    const fullname = user.fullname || user.name || user.email;
+                    const username = user.username || user.email;
+                    const role = user.role || user.type || 'editor';
+                    const status = user.status || 'active';
+                    
+                    document.getElementById('viewUserAvatar').textContent = getInitials(fullname);
+                    document.getElementById('viewUserFullname').textContent = fullname;
+                    document.getElementById('viewUserUsername').textContent = '@' + username;
+                    document.getElementById('viewUserEmail').textContent = user.email;
+                    document.getElementById('viewUserRole').textContent = role === 'admin' ? 'Administrador' : role === 'editor' ? 'Editor' : 'Visualizador';
+                    document.getElementById('viewUserStatus').textContent = status === 'active' ? 'Ativo' : 'Inativo';
+                    document.getElementById('viewUserStatus').className = `status-badge ${status}`;
+                    document.getElementById('viewUserCreated').textContent = formatDate(user.created_at);
+                    document.getElementById('viewUserLastLogin').textContent = formatDate(user.last_login);
+                    
+                    new bootstrap.Modal(document.getElementById('viewUserModal')).show();
+                } else {
+                    showToast('Erro ao carregar usuário', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading user:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Salvar usuário (criar/atualizar)
+        async function saveUser() {
+            const userId = document.getElementById('userId').value;
+            const username = document.getElementById('username').value;
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const status = document.getElementById('status').value;
+            
+            if (!username || !fullname || !email) {
+                showToast('Preencha todos os campos obrigatórios', 'danger');
+                return;
+            }
+            
+            if (!userId && !password) {
+                showToast('Senha é obrigatória para novos usuários', 'danger');
+                return;
+            }
+            
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            try {
+                const url = userId ? `${API_BASE}/users/${userId}` : `${API_BASE}/users`;
+                const method = userId ? 'PUT' : 'POST';
+                
+                // Adaptar para os campos do backend
+                const body = {
+                    fullname: fullname, // O backend espera 'fullname' ou 'name'?
+                    email: email,
+                    role: role,
+                    phone: '', // Campo opcional
+                    status: status // O backend pode ignorar isso se não tiver
+                };
+                
+                // Adicionar username se o backend suportar
+                if (username) {
+                    body.username = username;
+                }
+                
+                if (password) {
+                    body.password = password;
+                }
+                
+                console.log('Sending body:', body);
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getDefaultHeaders(),
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(userId ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                    await loadUsers();
+                } else {
+                    showToast(result.message || 'Erro ao salvar usuário', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Abrir modal de alterar senha
+        function openPasswordModal(userId) {
+            document.getElementById('passwordUserId').value = userId;
+            document.getElementById('passwordForm').reset();
+            new bootstrap.Modal(document.getElementById('passwordModal')).show();
+        }
+
+        // Alterar senha
+        async function changePassword() {
+            const userId = document.getElementById('passwordUserId').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!newPassword || !confirmPassword) {
+                showToast('Preencha todos os campos', 'danger');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('A senha deve ter no mínimo 6 caracteres', 'danger');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('As senhas não conferem', 'danger');
+                return;
+            }
+            
+            document.getElementById('loadingSpinner').classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: getDefaultHeaders(),
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Senha alterada com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+                } else {
+                    showToast(result.message || 'Erro ao alterar senha', 'danger');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showToast('Erro de conexão com o servidor', 'danger');
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('show');
+            }
+        }
+
+        // Deletar usuário
+        async function deleteUser(userId) {
+            if (userId === Auth.currentUser?.id) {
+                showToast('Não é possível excluir seu próprio usuário', 'danger');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                document.getElementById('loadingSpinner').classList.add('show');
+                
+                try {
+                    const response = await fetch(`${API_BASE}/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: getDefaultHeaders()
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showToast('Usuário excluído com sucesso!');
+                        await loadUsers();
+                    } else {
+                        showToast(result.message || 'Erro ao excluir usuário', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showToast('Erro de conexão com o servidor', 'danger');
+                } finally {
+                    document.getElementById('loadingSpinner').classList.remove('show');
+                }
+            }
+        }
+
+        // Resetar filtros
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            loadUsers();
+        }
+
+        // Logout
+        function logout() {
+            Auth.logout();
+            window.location.href = 'login.html';
+        }
+
+        // Inicialização
+        $(document).ready(async () => {
+            try {
+                await Auth.init();
+                
+                if (!Auth.currentUser || !Auth.token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log('token: ',Auth.token);
+                console.log('Type: ',Auth.type);
+
+                // Verificar se é admin
+                if (Auth.type !== 'admin') {
+                    showToast('Acesso restrito a administradores', 'danger');
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 2000);
+                    return;
+                }
+
+                await loadUsers();
+
+                // Event listeners para filtros
+                document.getElementById('searchInput').addEventListener('input', () => loadUsers());
+                document.getElementById('roleFilter').addEventListener('change', () => loadUsers());
+                document.getElementById('statusFilter').addEventListener('change', () => loadUsers());
+
+            } catch (error) {
+                console.error('Erro fatal na inicialização:', error);
+                showToast('Erro ao carregar a página. Faça login novamente.', 'danger');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

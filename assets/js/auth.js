@@ -3,10 +3,14 @@ const API_BASE = 'https://vivalld.com.br/api/api';
 const Auth = {
     currentUser: null,
     token: null,
+    type: null,
+
 
     async init() {
         this.token = localStorage.getItem('auth_token');
         this.currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        this.type = JSON.parse(localStorage.getItem('type') || 'null'); 
+
         
         if(this.token && this.currentUser) {
             try {
@@ -58,6 +62,7 @@ const Auth = {
         
         localStorage.setItem('auth_token', this.token);
         localStorage.setItem('user', JSON.stringify(this.currentUser));
+        localStorage.setItem('type', JSON.stringify(this.type));
         
         return result.data;
     },

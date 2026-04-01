@@ -1,20 +1,45 @@
 const Repertorio = {
-    sections: [
-        'Entrada do Noivo',
-        'Entrada das Damas',
-        'Entrada da Noiva',
-        'Salmo',
-        'Aclamação',
-        'Comunhão',
-        'Assinatura',
-        'Fotos',
-        'Saída do Casal'
-    ],
+    sections: [],
     
     currentSectionIndex: 0,
     currentAudio: null,
     currentPlayingId: null,
     selections: {},
+
+    async loadSections() {
+        try {
+            const response = await fetch(`${API_BASE}/sections`, {
+                headers: {
+                    'Authorization': `Bearer ${Auth.token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.sections = result.data.map(s => ({
+                    name: s.name,
+                    limit: s.limit
+                }));
+            }
+        } catch (error) {
+            console.error('Erro ao carregar seções:', error);
+        }
+    },
+
+    getCurrentSectionName() {
+        return this.sections[this.currentSectionIndex].name;
+    },
+
+    getCurrentSectionLimit() {
+        return this.sections[this.currentSectionIndex].limit;
+    },
+
+    getSectionLimit(sectionName) {
+        const section = this.sections.find(s => s.name === sectionName);
+        return section ? section.limit : 0;
+    },
 
     async init() {
         try {
@@ -24,6 +49,7 @@ const Repertorio = {
             }
 
             // Load saved selections from API
+            await this.loadSections();   
             await this.loadSelections();
             
             // Load saved progress from API
@@ -114,14 +140,15 @@ const Repertorio = {
             const songs = result.success ? result.data : [];
             
             const sectionSelections = this.selections[sectionName] || [];
+            let html = '';
             
-            let html = `
+            const sectionLimit = this.getSectionLimit(sectionName);
+            html += `
                 <div class="section-card fade-in">
                     <h2 class="section-title">${sectionName}</h2>
                     <div class="selection-counter">
-                        Selecionadas: <span id="counter-${sectionName.replace(/\s/g, '')}">${sectionSelections.length}</span>/2
+                        Selecionadas: <span id="counter-${sectionName.replace(/\s/g, '')}">${sectionSelections.length}</span>/${sectionLimit}
                     </div>
-                    <div class="songs-list">
             `;
 
             songs.forEach(song => {
@@ -178,6 +205,9 @@ const Repertorio = {
     },
 
     async toggleSelection(songId) {
+        
+        $('#loadingOverlay').removeClass('d-none');
+
         // Buscar música para obter a seção
         const song = await this.getSongById(songId);
         if (!song) return;
@@ -190,20 +220,30 @@ const Repertorio = {
 
         const index = this.selections[section].indexOf(songId);
         let success = false;
+        // Update card style
+        const card = $(`.music-card[data-song-id="${songId}"]`);
         
         if (index === -1) {
             // Add selection
-            if (this.selections[section].length >= 2) {
-                this.showToast('Você já selecionou o máximo de 2 músicas para esta seção');
+            const sectionLimit = this.getSectionLimit(section);
+            if (this.selections[section].length >= sectionLimit){
+                this.showToast(`Você já selecionou o máximo de ${sectionLimit} ${sectionLimit === 1 ? 'música' : 'músicas'} para esta seção`);
+                $('#loadingOverlay').addClass('d-none');
                 return;
             }
+
+            card.addClass('selected');
             
             // Chamar API para adicionar
             success = await this.addSelectionToAPI(songId, section);
             if (success) {
                 this.selections[section].push(songId);
             }
+            $('#loadingOverlay').addClass('d-none');
         } else {
+            // Remove selection
+            card.removeClass('selected');
+            
             // Remove selection - chamar API para remover
             success = await this.removeSelectionFromAPI(songId);
             if (success) {
@@ -214,14 +254,15 @@ const Repertorio = {
                     delete this.selections[section];
                 }
             }
+            $('#loadingOverlay').addClass('d-none');
         }
 
         if (success) {
             // Update counter
             $(`#counter-${section.replace(/\s/g, '')}`).text(this.selections[section]?.length || 0);
             
-            // Update card style
-            const card = $(`.music-card[data-song-id="${songId}"]`);
+            // // Update card style
+            // const card = $(`.music-card[data-song-id="${songId}"]`);
             if (index === -1) {
                 card.addClass('selected');
             } else {
@@ -459,11 +500,35 @@ const Repertorio = {
         $('#progressText').text(`${this.currentSectionIndex + 1}/${this.sections.length}`);
     },
 
+    async deleteProgress() {
+        try {
+            await fetch(`${API_BASE}/progress`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.token}`,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ currentSection: this.currentSectionIndex })
+            });
+        } catch (error) {
+            console.error('Error saving progress:', error);
+        }
+    },
+
     updateNextButton() {
-        const currentSection = this.sections[this.currentSectionIndex];
+        const currentSection = this.getCurrentSectionName();
+        const sectionLimit = this.getCurrentSectionLimit();
         const selections = this.selections[currentSection] || [];
-        const isValid = selections.length >= 1 && selections.length <= 2;
         
+        // Se a seção não permite seleção (limite 0), o botão next fica habilitado
+        if (sectionLimit === 0) {
+            $('#nextButton').prop('disabled', false);
+            return;
+        }
+        
+        // Para seções com limite > 0, precisa ter pelo menos 1 e no máximo o limite
+        const isValid = selections.length >= 1 && selections.length <= sectionLimit;
         $('#nextButton').prop('disabled', !isValid);
     },
 
@@ -471,10 +536,10 @@ const Repertorio = {
         let html = '<div class="section-card fade-in"><h2 class="section-title">Repertório Escolhido</h2>';
         
         for (const section of this.sections) {
-            const sectionSelections = this.selections[section] || [];
+            const sectionSelections = this.selections[section.name] || [];
             
             if (sectionSelections.length > 0) {
-                html += `<div class="mb-4"><h3 class="h5" style="color: var(--secondary-color);">${section}</h3>`;
+                html += `<div class="mb-4"><h3 class="h5" style="color: var(--secondary-color);">${section.name}</h3>`;
                 
                 for (const songId of sectionSelections) {
                     const song = await this.getSongById(songId);

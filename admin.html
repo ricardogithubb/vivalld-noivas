@@ -240,13 +240,18 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">
-                            <i class="bi bi-house"></i> Início
+                        <a class="nav-link active" href="admin.html">
+                            <i class="bi bi-music-note"></i> Músicas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                            <i class="bi bi-upload"></i> Upload
+                        <a class="nav-link" href="users.html">
+                            <i class="bi bi-people"></i> Usuários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Sair
                         </a>
                     </li>
                 </ul>
@@ -893,6 +898,12 @@
             }, 2000);
         }
     });
+
+    // Função de logout
+    function logout() {
+        Auth.logout();
+        window.location.href = 'login.html';
+    }
 </script>
 </body>
 </html>

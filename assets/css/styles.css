@@ -51,7 +51,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .header-subtitle {
     font-size: 0.85rem;
-    color: var(--text-light);
+    color: #000000;
     margin: 0;
     font-style: italic;
 }
@@ -152,7 +152,7 @@ h1, h2, h3, h4, h5, h6 {
 .section-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--secondary-color);
+    color: #000000;
     margin-bottom: 1rem;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0.5rem;
@@ -175,7 +175,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .music-card.selected {
-    background: linear-gradient(135deg, #fef9f4, #f8f0e6);
+    background: rgba(251, 216, 68, 0.6);
     border: 2px solid var(--primary-color);
 }
 
@@ -187,7 +187,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .music-title {
     font-weight: 600;
-    color: var(--text-dark);
+    color: #000000;
     margin-bottom: 0.25rem;
 }
 
