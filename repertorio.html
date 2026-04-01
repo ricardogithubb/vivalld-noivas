@@ -111,17 +111,12 @@
     <script>
         let menuOffcanvas;
         let currentSectionIndex = 0;
-        const sections = [
-            'Entrada do Noivo',
-            'Entrada das Damas',
-            'Entrada da Noiva',
-            'Salmo',
-            'Aclamação',
-            'Comunhão',
-            'Assinatura',
-            'Fotos',
-            'Saída do Casal'
-        ];
+        function getSections() {
+            return Array.isArray(Repertorio.sections)
+                ? Repertorio.sections.map(s => s.name)
+                : [];
+        }
+
 
 
         $(document).ready(async () => {
@@ -166,7 +161,7 @@
             });
 
             $('#nextButton').on('click', async () => {
-                if (currentSectionIndex < sections.length - 1) {
+                if (currentSectionIndex < getSections().length - 1) {
                     currentSectionIndex++;
                     Repertorio.currentSectionIndex = currentSectionIndex;
                     await Repertorio.saveProgressLocalAndQueue();
@@ -194,21 +189,45 @@
 
         async function loadCurrentSection() {
             $('#loadingOverlay').removeClass('d-none');
-            
+
+            const sections = getSections();
+
+            if (!sections.length) {
+                $('#mainContent').html('<div class="alert alert-warning">Nenhuma seção encontrada.</div>');
+                $('#wizardProgress').css('width', '0%');
+                $('#progressText').text('0/0');
+                $('#nextButton').prop('disabled', true);
+                $('#loadingOverlay').addClass('d-none');
+                return;
+            }
+
+            if (currentSectionIndex >= sections.length) {
+                currentSectionIndex = 0;
+                Repertorio.currentSectionIndex = 0;
+            }
+
             const sectionName = sections[currentSectionIndex];
             const html = await Repertorio.renderSection(sectionName);
             $('#mainContent').html(html);
-            
+
             updateProgress();
             Repertorio.updateNextButton();
-            
+
             $('#loadingOverlay').addClass('d-none');
         }
 
         function updateProgress() {
-            const progress = ((currentSectionIndex + 1) / sections.length) * 100;
+            const total = getSections().length;
+
+            if (!total) {
+                $('#wizardProgress').css('width', '0%');
+                $('#progressText').text('0/0');
+                return;
+            }
+
+            const progress = ((currentSectionIndex + 1) / total) * 100;
             $('#wizardProgress').css('width', `${progress}%`);
-            $('#progressText').text(`${currentSectionIndex + 1}/${sections.length}`);
+            $('#progressText').text(`${currentSectionIndex + 1}/${total}`);
         }
     </script>
 </body>

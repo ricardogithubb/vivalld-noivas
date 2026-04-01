@@ -28,6 +28,8 @@ const Repertorio = {
             this.setupAudioListeners();
             this.setupSyncEvents();
 
+            this.selections = this.selections || {};
+
             this.scheduleSync(1000);
         } catch (error) {
             console.error('Error initializing repertorio:', error);
@@ -191,7 +193,7 @@ const Repertorio = {
             `;
 
             songs.forEach(song => {
-                const isSelected = sectionSelections.includes(song.song_id);
+                const isSelected = sectionSelections.map(String).includes(String(song.song_id));
                 const isPlaying = this.currentPlayingId === song.song_id;
                 html += this.renderSongCard(song, isSelected, isPlaying);
             });
@@ -280,40 +282,72 @@ const Repertorio = {
     },
 
     async toggleSelection(songId) {
+        console.log('[TOGGLE] songId recebido:', songId, 'tipo:', typeof songId);
+
         const song = this.getSongById(songId);
+        console.log('[TOGGLE] song encontrado:', song);
 
         if (!song) {
             this.showToast('Música não encontrada');
             return;
         }
 
-        const section = song.section;
+        const section = String(song.section || '').trim();
+        const normalizedSongId = String(songId).trim();
 
-        if (!this.selections[section]) {
+        console.log('normalizedSongId:', normalizedSongId);
+
+        if (!section) {
+            this.showToast('Seção inválida');
+            return;
+        }
+
+        // aqui está o ponto principal
+        if (!this.selections || typeof this.selections !== 'object' || Array.isArray(this.selections)) {
+            console.log('transformando em objeto');
+            this.selections = {};
+        }
+
+        console.log('section:', section);
+        console.log('this.selections antes da seção:', this.selections);
+        console.log('Array.isArray(this.selections):', Array.isArray(this.selections));
+
+        if (!Array.isArray(this.selections[section])) {
+            console.log('transformando seção em []');
             this.selections[section] = [];
         }
 
+        this.selections[section] = this.selections[section].map(String);
+
         const selected = this.selections[section];
-        const index = selected.indexOf(songId);
+        const index = selected.indexOf(normalizedSongId);
+
+        console.log('selected:', selected);
+        console.log('index:', index);
+        console.log('[TOGGLE] antes:', JSON.stringify(this.selections));
 
         if (index === -1) {
             const sectionLimit = this.getSectionLimit(section);
 
-            if (selected.length >= sectionLimit && sectionLimit > 0) {
-                this.showToast(`Você já selecionou o máximo de ${sectionLimit} ${sectionLimit === 1 ? 'música' : 'músicas'} para esta seção`);
+            if (sectionLimit > 0 && selected.length >= sectionLimit) {
+                this.showToast(`Limite de ${sectionLimit} música(s) atingido`);
                 return;
             }
 
-            selected.push(songId);
+            selected.push(normalizedSongId);
         } else {
             selected.splice(index, 1);
 
-            if (!selected.length) {
+            if (selected.length === 0) {
                 delete this.selections[section];
             }
         }
 
+        console.log('[TOGGLE] depois objeto real:', this.selections);
+        console.log('[TOGGLE] depois json:', JSON.stringify(this.selections));
+
         await this.saveLocalSelections();
+
         await DB.enqueueSync({
             type: 'state_change',
             currentSection: this.currentSectionIndex
@@ -354,6 +388,22 @@ const Repertorio = {
         this.isSyncing = true;
 
         try {
+            const safeSelections = (
+                this.selections &&
+                typeof this.selections === 'object' &&
+                !Array.isArray(this.selections)
+            ) ? this.selections : {};
+
+            const payload = {
+                currentSection: this.currentSectionIndex,
+                selections: safeSelections
+            };
+
+            console.log('[SYNC] payload final:', JSON.stringify({
+                currentSection: this.currentSectionIndex,
+                selections: this.selections
+            }));
+
             const response = await fetch(`${API_BASE}/selections/sync`, {
                 method: 'POST',
                 headers: {
@@ -361,22 +411,50 @@ const Repertorio = {
                     'Authorization': `Bearer ${Auth.token}`,
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    currentSection: this.currentSectionIndex,
-                    selections: this.selections
-                })
+                body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
+            let result = null;
 
-            if (result.success) {
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error('[SYNC] Erro ao interpretar JSON:', jsonError);
+                this.showToast('Erro ao sincronizar: resposta inválida do servidor');
+                return;
+            }
+
+            console.log('[SYNC] Resposta da API:', result);
+
+            if (response.ok && result.success) {
                 await DB.clear('sync_queue');
                 await DB.setMeta('lastSync', result.data?.syncedAt || new Date().toISOString());
-            } else {
-                console.warn('Falha na sincronização:', result);
+                return;
             }
+
+            let errorMessage = result?.message || `Erro HTTP ${response.status}`;
+
+            if (result?.errors && typeof result.errors === 'object') {
+                const detailedErrors = [];
+
+                Object.entries(result.errors).forEach(([field, messages]) => {
+                    if (Array.isArray(messages)) {
+                        messages.forEach(msg => detailedErrors.push(`${field}: ${msg}`));
+                    } else if (messages) {
+                        detailedErrors.push(`${field}: ${messages}`);
+                    }
+                });
+
+                if (detailedErrors.length) {
+                    errorMessage += ' - ' + detailedErrors.join(' | ');
+                }
+            }
+
+            console.warn('Falha na sincronização:', result);
+            this.showToast(errorMessage);
         } catch (error) {
             console.error('Erro ao sincronizar:', error);
+            this.showToast(`Erro ao sincronizar: ${error.message || 'falha inesperada'}`);
         } finally {
             this.isSyncing = false;
         }
@@ -583,16 +661,18 @@ const Repertorio = {
     },
 
     showToast(message) {
+        const safeMessage = String(message || 'Ocorreu um erro inesperado');
+
         const toast = $(`
             <div class="toast custom-toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-body">
-                    ${message}
+                <div class="toast-body" style="white-space: normal; word-break: break-word;">
+                    ${safeMessage}
                 </div>
             </div>
         `);
 
         $('.toast-container').append(toast);
-        const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
+        const bsToast = new bootstrap.Toast(toast[0], { delay: 6000 });
         bsToast.show();
 
         toast.on('hidden.bs.toast', function() {
