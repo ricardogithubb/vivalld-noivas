@@ -101,6 +101,147 @@
         </div>
     </div>
 
+    <!-- Modal de Instruções -->
+    <!-- Modal de Instruções -->
+    <div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);">
+                
+                <div class="modal-header border-0 pb-0" style="padding: 1.5rem 1.5rem 0.5rem 1.5rem;">
+                    <div class="w-100 text-center">
+                        <div style="
+                            width: 72px;
+                            height: 72px;
+                            margin: 0 auto 14px auto;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: linear-gradient(135deg, #d4af37, #f3e5ab);
+                            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.25);
+                        ">
+                            <i class="bi bi-music-note-beamed" style="font-size: 1.8rem; color: #fff;"></i>
+                        </div>
+
+                        <h5 id="instructionsModalLabel" class="modal-title fw-semibold" style="
+                            font-family: 'Cormorant Garamond', serif;
+                            font-size: 2rem;
+                            color: #3a2f2a;
+                            letter-spacing: 0.3px;
+                        ">
+                            Como usar
+                        </h5>
+
+                        <p class="mb-0" style="
+                            font-size: 0.95rem;
+                            color: #8b7d74;
+                            font-family: 'Montserrat', sans-serif;
+                        ">
+                            Selecione e ouça suas músicas com facilidade
+                        </p>
+                    </div>
+                </div>
+
+                <div class="modal-body pt-3" style="padding: 1.25rem 1.5rem 1rem 1.5rem;">
+                    <div class="mb-3 p-3" style="
+                        background: rgba(255,255,255,0.85);
+                        border: 1px solid rgba(212, 175, 55, 0.18);
+                        border-radius: 18px;
+                        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+                    ">
+                        <div class="d-flex align-items-start gap-3">
+                            <div style="
+                                min-width: 42px;
+                                height: 42px;
+                                border-radius: 12px;
+                                background: linear-gradient(135deg, #f7d774, #e7bb45);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 14px rgba(231, 187, 69, 0.25);
+                            ">
+                                <i class="bi bi-check2-circle" style="color: white; font-size: 1.1rem;"></i>
+                            </div>
+                            <div>
+                                <div style="
+                                    font-weight: 600;
+                                    color: #4a3d36;
+                                    font-family: 'Montserrat', sans-serif;
+                                    margin-bottom: 4px;
+                                ">
+                                    Selecionar música
+                                </div>
+                                <div style="
+                                    color: #7b6e65;
+                                    font-size: 0.93rem;
+                                    line-height: 1.5;
+                                ">
+                                    Clique sobre o cartão da música para marcá-la como selecionada.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3" style="
+                        background: rgba(255,255,255,0.85);
+                        border: 1px solid rgba(212, 175, 55, 0.18);
+                        border-radius: 18px;
+                        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+                    ">
+                        <div class="d-flex align-items-start gap-3">
+                            <div style="
+                                min-width: 42px;
+                                height: 42px;
+                                border-radius: 12px;
+                                background: linear-gradient(135deg, #c89b3c, #a67c2e);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 6px 14px rgba(166, 124, 46, 0.25);
+                            ">
+                                <i class="bi bi-play-fill" style="color: white; font-size: 1.2rem;"></i>
+                            </div>
+                            <div>
+                                <div style="
+                                    font-weight: 600;
+                                    color: #4a3d36;
+                                    font-family: 'Montserrat', sans-serif;
+                                    margin-bottom: 4px;
+                                ">
+                                    Reproduzir música
+                                </div>
+                                <div style="
+                                    color: #7b6e65;
+                                    font-size: 0.93rem;
+                                    line-height: 1.5;
+                                ">
+                                    Use o botão de play para ouvir a prévia da música antes de escolher.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <button type="button" class="btn w-100" data-bs-dismiss="modal" style="
+                        border: none;
+                        border-radius: 14px;
+                        padding: 0.9rem 1rem;
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        letter-spacing: 0.3px;
+                        color: #fff;
+                        background: linear-gradient(135deg, #b88a2d, #d4af37);
+                        box-shadow: 0 10px 20px rgba(184, 138, 45, 0.28);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 14px 28px rgba(184, 138, 45, 0.32)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 20px rgba(184, 138, 45, 0.28)'">
+                        Entendi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- <script src="./assets/js/musicas.js"></script> -->

@@ -245,6 +245,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="openSectionsModal()">
+                            <i class="bi bi-diagram-3"></i> Seções
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="users.html">
                             <i class="bi bi-people"></i> Usuários
                         </a>
@@ -285,15 +290,6 @@
             <div class="col-md-3">
                 <select class="form-select" id="sectionFilter">
                     <option value="">Todas as seções</option>
-                    <option value="Entrada do Noivo">Entrada do Noivo</option>
-                    <option value="Entrada das Damas">Entrada das Damas</option>
-                    <option value="Entrada da Noiva">Entrada da Noiva</option>
-                    <option value="Salmo">Salmo</option>
-                    <option value="Aclamação">Aclamação</option>
-                    <option value="Comunhão">Comunhão</option>
-                    <option value="Assinatura">Assinatura</option>
-                    <option value="Fotos">Fotos</option>
-                    <option value="Saída do Casal">Saída do Casal</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -337,17 +333,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Seção</label>
-                                <select class="form-select" id="section">
-                                        <option value="Entrada do Noivo">Entrada do Noivo</option>
-                                        <option value="Entrada das Damas">Entrada das Damas</option>
-                                        <option value="Entrada da Noiva">Entrada da Noiva</option>
-                                        <option value="Salmo">Salmo</option>
-                                        <option value="Aclamação">Aclamação</option>
-                                        <option value="Comunhão">Comunhão</option>
-                                        <option value="Assinatura">Assinatura</option>
-                                        <option value="Fotos">Fotos</option>
-                                        <option value="Saída do Casal">Saída do Casal</option>
-                                </select>
+                                <select class="form-select" id="section"></select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Duração (segundos)</label>
@@ -413,17 +399,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Seção</label>
-                                <select class="form-select" id="editSection">
-                                    <option value="Entrada do Noivo">Entrada do Noivo</option>
-                                    <option value="Entrada das Damas">Entrada das Damas</option>
-                                    <option value="Entrada da Noiva">Entrada da Noiva</option>
-                                    <option value="Salmo">Salmo</option>
-                                    <option value="Aclamação">Aclamação</option>
-                                    <option value="Comunhão">Comunhão</option>
-                                    <option value="Assinatura">Assinatura</option>
-                                    <option value="Fotos">Fotos</option>
-                                    <option value="Saída do Casal">Saída do Casal</option>
-                                </select>
+                                <select class="form-select" id="editSection"></select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Duração (segundos)</label>
@@ -464,6 +440,61 @@
         </div>
     </div>
 
+    <div class="modal fade" id="sectionsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-diagram-3"></i> Gerenciar Seções
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="sectionName" placeholder="Nome da seção">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" id="sectionLimit" placeholder="Limite" min="0" value="1">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" id="sectionOrder" placeholder="Ordem" min="1" value="1">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sectionActive">
+                                <option value="1">Ativa</option>
+                                <option value="0">Inativa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="saveSection()">
+                                <i class="bi bi-plus-circle"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="sectionEditId">
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Limite</th>
+                                    <th>Ordem</th>
+                                    <th>Status</th>
+                                    <th style="width: 180px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sectionsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -479,6 +510,287 @@
     <!-- JavaScript personalizado com integração à API -->
 <script>
 
+    let allSections = [];
+
+    async function fetchSections() {
+        const response = await fetch(`${API_BASE}/sections`, {
+            headers: getDefaultHeaders()
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'Erro ao buscar seções');
+        }
+
+        return result.data || [];
+    }
+
+    async function loadSectionsIntoSelects() {
+        try {
+            allSections = await fetchSections();
+
+            const sectionFilter = document.getElementById('sectionFilter');
+            const sectionCreate = document.getElementById('section');
+            const sectionEdit = document.getElementById('editSection');
+
+            const filterValue = sectionFilter ? sectionFilter.value : '';
+            const createValue = sectionCreate ? sectionCreate.value : '';
+            const editValue = sectionEdit ? sectionEdit.value : '';
+
+            if (sectionFilter) {
+                sectionFilter.innerHTML = '<option value="">Todas as seções</option>';
+            }
+
+            if (sectionCreate) {
+                sectionCreate.innerHTML = '';
+            }
+
+            if (sectionEdit) {
+                sectionEdit.innerHTML = '';
+            }
+
+            allSections.forEach(section => {
+                const option = `<option value="${section.name}">${section.name}</option>`;
+                if (sectionFilter) sectionFilter.innerHTML += option;
+                if (sectionCreate) sectionCreate.innerHTML += option;
+                if (sectionEdit) sectionEdit.innerHTML += option;
+            });
+
+            if (filterValue) sectionFilter.value = filterValue;
+            if (createValue) sectionCreate.value = createValue;
+            if (editValue) sectionEdit.value = editValue;
+
+        } catch (error) {
+            console.error(error);
+            showToast('Erro ao carregar seções', 'danger');
+        }
+    }
+
+    async function openSectionsModal() {
+        await loadSectionsTable();
+        new bootstrap.Modal(document.getElementById('sectionsModal')).show();
+    }
+
+    async function loadSectionsTable() {
+        try {
+            const sections = await fetchSections();
+            const tbody = document.getElementById('sectionsTableBody');
+            tbody.innerHTML = '';
+
+            if (!sections.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Nenhuma seção encontrada</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            sections.forEach(section => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${section.name}</td>
+                        <td>${section.limit}</td>
+                        <td>${section.order}</td>
+                        <td>
+                            <span class="badge ${section.active ? 'bg-success' : 'bg-secondary'}">
+                                ${section.active ? 'Ativa' : 'Inativa'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick='editSection(${JSON.stringify(section)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSection(${section.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            console.error(error);
+            showToast('Erro ao carregar tabela de seções', 'danger');
+        }
+    }
+
+    function clearSectionForm() {
+        document.getElementById('sectionEditId').value = '';
+        document.getElementById('sectionName').value = '';
+        document.getElementById('sectionLimit').value = 1;
+        document.getElementById('sectionOrder').value = 1;
+        document.getElementById('sectionActive').value = '1';
+    }
+
+    function editSection(section) {
+        document.getElementById('sectionEditId').value = section.id;
+        document.getElementById('sectionName').value = section.name;
+        document.getElementById('sectionLimit').value = section.limit;
+        document.getElementById('sectionOrder').value = section.order;
+        document.getElementById('sectionActive').value = section.active ? '1' : '0';
+    }
+
+    async function saveSection() {
+        const id = document.getElementById('sectionEditId').value;
+        const name = document.getElementById('sectionName').value.trim();
+        const limit_songs = parseInt(document.getElementById('sectionLimit').value || '0', 10);
+        const sort_order = parseInt(document.getElementById('sectionOrder').value || '0', 10);
+        const active = parseInt(document.getElementById('sectionActive').value, 10);
+
+        if (!name) {
+            showToast('Informe o nome da seção', 'danger');
+            return;
+        }
+
+        const payload = { name, limit_songs, sort_order, active };
+
+        try {
+            const response = await fetch(
+                id ? `${API_BASE}/sections/${id}` : `${API_BASE}/sections`,
+                {
+                    method: id ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getDefaultHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast(result.message || 'Erro ao salvar seção', 'danger');
+                return;
+            }
+
+            showToast(id ? 'Seção atualizada com sucesso!' : 'Seção criada com sucesso!');
+            clearSectionForm();
+            await loadSectionsTable();
+            await loadSectionsIntoSelects();
+            await loadSongs();
+
+        } catch (error) {
+            console.error(error);
+            showToast('Erro de conexão ao salvar seção', 'danger');
+        }
+    }
+
+    async function deleteSection(id) {
+        if (!confirm('Deseja realmente excluir esta seção?')) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/sections/${id}`, {
+                method: 'DELETE',
+                headers: getDefaultHeaders()
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast(result.message || 'Erro ao excluir seção', 'danger');
+                return;
+            }
+
+            showToast('Seção excluída com sucesso!');
+            clearSectionForm();
+            await loadSectionsTable();
+            await loadSectionsIntoSelects();
+            await loadSongs();
+
+        } catch (error) {
+            console.error(error);
+            showToast('Erro de conexão ao excluir seção', 'danger');
+        }
+    }
+
+    async function loadSectionsIntoSelects() {
+        const sectionFilter = document.getElementById('sectionFilter');
+        const sectionCreate = document.getElementById('section');
+        const sectionEdit = document.getElementById('editSection');
+
+        try {
+            const response = await fetch(`${API_BASE}/sections`, {
+                headers: getDefaultHeaders()
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast('Erro ao carregar seções', 'danger');
+                return;
+            }
+
+            const filterValue = sectionFilter ? sectionFilter.value : '';
+            const createValue = sectionCreate ? sectionCreate.value : '';
+            const editValue = sectionEdit ? sectionEdit.value : '';
+
+            if (sectionFilter) {
+                sectionFilter.innerHTML = '<option value="">Todas as seções</option>';
+            }
+
+            if (sectionCreate) {
+                sectionCreate.innerHTML = '';
+            }
+
+            if (sectionEdit) {
+                sectionEdit.innerHTML = '';
+            }
+
+            result.data.forEach(section => {
+                const optionHtml = `<option value="${section.name}">${section.name}</option>`;
+
+                if (sectionFilter) sectionFilter.innerHTML += optionHtml;
+                if (sectionCreate) sectionCreate.innerHTML += optionHtml;
+                if (sectionEdit) sectionEdit.innerHTML += optionHtml;
+            });
+
+            if (sectionFilter && filterValue) sectionFilter.value = filterValue;
+            if (sectionCreate && createValue) sectionCreate.value = createValue;
+            if (sectionEdit && editValue) sectionEdit.value = editValue;
+
+        } catch (error) {
+            console.error('Erro ao carregar seções:', error);
+            showToast('Erro de conexão ao carregar seções', 'danger');
+        }
+    }
+    
+    // async function loadSectionFilter() {
+    //     const sectionFilter = document.getElementById('sectionFilter');
+
+    //     try {
+    //         const response = await fetch(`${API_BASE}/sections`, {
+    //             headers: getDefaultHeaders()
+    //         });
+
+    //         const result = await response.json();
+
+    //         if (!result.success) {
+    //             showToast('Erro ao carregar seções', 'danger');
+    //             return;
+    //         }
+
+    //         const currentValue = sectionFilter.value;
+
+    //         sectionFilter.innerHTML = '<option value="">Todas as seções</option>';
+
+    //         result.data.forEach(section => {
+    //             sectionFilter.innerHTML += `
+    //                 <option value="${section.name}">${section.name}</option>
+    //             `;
+    //         });
+
+    //         if (currentValue) {
+    //             sectionFilter.value = currentValue;
+    //         }
+
+    //     } catch (error) {
+    //         console.error('Erro ao carregar sectionFilter:', error);
+    //         showToast('Erro de conexão ao carregar seções', 'danger');
+    //     }
+    // } 
+   
     // Headers padrão para as requisições
     function getDefaultHeaders() {
         return {
@@ -886,6 +1198,8 @@
                 window.location.href = 'login.html';
                 return;
             }
+
+            await loadSectionsIntoSelects();
 
             // Carregar músicas inicialmente
             await loadSongs();

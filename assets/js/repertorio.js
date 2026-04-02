@@ -14,16 +14,20 @@ const Repertorio = {
         try {
             if (!Auth.token) return;
 
+            this.currentSectionIndex = 0;
+
+            this.showInstructionsModal();
+
             await DB.init();
             await this.loadSections();
 
             await this.loadLocalSongs();
             await this.loadLocalSelections();
-            await this.loadLocalProgress();
+            // await this.loadLocalProgress();
 
             await this.loadSongsFromAPI();
             await this.loadSelectionsFromAPI();
-            await this.loadProgressFromAPI();
+            // await this.loadProgressFromAPI();
 
             this.setupAudioListeners();
             this.setupSyncEvents();
@@ -35,6 +39,32 @@ const Repertorio = {
             console.error('Error initializing repertorio:', error);
             this.selections = this.selections || {};
             this.currentSectionIndex = this.currentSectionIndex || 0;
+        }
+    },
+
+    showInstructionsModal() {
+
+        const alreadySeen = localStorage.getItem('instructionsSeen');
+
+        if (!alreadySeen) return;
+
+        const tryOpenModal = () => {
+            const modalElement = document.getElementById('instructionsModal');
+
+            if (!modalElement || typeof bootstrap === 'undefined') {
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            localStorage.setItem('instructionsSeen', 'true');
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', tryOpenModal, { once: true });
+        } else {
+            setTimeout(tryOpenModal, 100);
         }
     },
 
@@ -538,6 +568,25 @@ const Repertorio = {
 
         this.currentAudio.addEventListener('ended', () => {
             this.stopAllAudio();
+        });
+
+        this.currentAudio.addEventListener('loadedmetadata', () => {
+            const duration = Math.floor(this.currentAudio.duration);
+
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+
+            const durationFormatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Atualiza o tempo total na tela
+            const totalTimeEl = card.find('.total-time');
+            if (totalTimeEl.length) {
+                totalTimeEl.text(durationFormatted);
+            }
+
+            // Atualiza o max do slider
+            const slider = $(`.progress-slider[data-song-id="${song.song_id}"]`);
+            slider.attr('max', duration);
         });
 
         this.currentAudio.play().catch(e => console.log('Audio play failed:', e));
